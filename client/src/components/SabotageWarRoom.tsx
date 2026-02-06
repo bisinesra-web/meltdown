@@ -1,0 +1,14 @@
+import React from 'react';
+
+const SabotageWarRoom = () => {
+  return (
+    <div className="sabotage-warroom">
+      <h2>Sabotage War Room</h2>
+      <div className="strategy-board">
+        {/* Saboteur strategy and actions */}
+      </div>
+    </div>
+  );
+};
+
+export default SabotageWarRoom;

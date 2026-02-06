@@ -1,0 +1,26 @@
+{
+  "name": "reactor-game-server",
+  "version": "1.0.0",
+  "description": "Node.js backend for reactor game",
+  "private": true,
+  "main": "index.ts",
+  "type": "module",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "socket.io": "^4.5.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.0.10",
+    "nodemon": "^2.0.22",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.3"
+  },
+  "scripts": {
+    "dev": "tsx watch index.ts",
+    "start": "tsx index.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  }
+}

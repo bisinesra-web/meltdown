@@ -1,0 +1,171 @@
+import './TeamSetup.css';
+
+.team-setup {
+  min-height: 100vh;
+  padding: 2rem;
+  background-color: var(--background-black);
+}
+
+.setup-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.setup-container h1 {
+  margin-bottom: 2rem;
+  border-bottom: 3px solid var(--primary-green);
+  padding-bottom: 1rem;
+}
+
+.btn-back {
+  background-color: transparent;
+  border: 2px solid var(--dark-green);
+  color: var(--dark-green);
+  padding: 8px 16px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 2rem;
+}
+
+.btn-back:hover {
+  background-color: var(--dark-green);
+  color: var(--background-black);
+}
+
+.setup-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.setup-panel {
+  background-color: var(--panel-black);
+  border: 2px solid var(--primary-green);
+  padding: 2rem;
+}
+
+.setup-panel h2 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+}
+
+.input-group {
+  margin-bottom: 1.5rem;
+}
+
+.input-group label {
+  display: block;
+  font-size: 0.9rem;
+  letter-spacing: 1px;
+  margin-bottom: 0.5rem;
+  color: var(--dark-green);
+}
+
+.input-group input,
+.input-group select {
+  width: 100%;
+  padding: 10px 12px;
+  background-color: var(--background-black);
+  border: 2px solid var(--primary-green);
+  color: var(--primary-green);
+  font-family: 'Courier New', monospace;
+  font-size: 1rem;
+  letter-spacing: 1px;
+  transition: box-shadow 0.2s ease;
+}
+
+.input-group input:focus,
+.input-group select:focus {
+  outline: none;
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+}
+
+.input-group input::placeholder {
+  color: var(--dark-green);
+}
+
+.role-assignment {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 1.5rem;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.role-box {
+  border: 2px solid var(--primary-green);
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.role-box h3 {
+  margin: 0 0 0.5rem 0;
+  letter-spacing: 2px;
+  font-size: 1.2rem;
+}
+
+.role-box.stabilizing {
+  border-color: var(--primary-green);
+  background-color: rgba(0, 255, 0, 0.02);
+}
+
+.role-box.sabotaging {
+  border-color: var(--dark-green);
+  background-color: rgba(0, 170, 0, 0.02);
+}
+
+.team-name {
+  font-weight: bold;
+  font-size: 1.1rem;
+  color: var(--primary-green);
+  margin: 0.5rem 0;
+}
+
+.role-desc {
+  font-size: 0.85rem;
+  color: var(--dark-green);
+  margin: 0.3rem 0;
+  line-height: 1.4;
+}
+
+.vs-text {
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-align: center;
+  letter-spacing: 2px;
+  color: var(--primary-green);
+}
+
+.action-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.action-buttons .btn {
+  padding: 16px 48px;
+  font-size: 1.1rem;
+}
+
+@media (max-width: 768px) {
+  .setup-container {
+    padding: 0 1rem;
+  }
+
+  .setup-panel {
+    padding: 1.5rem;
+  }
+
+  .role-assignment {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .vs-text {
+    order: -1;
+  }
+}
