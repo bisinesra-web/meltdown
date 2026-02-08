@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
-import './TeamSetup.css';
+import React, { useState } from "react";
+import "./TeamSetup.css";
 
-type NavigateTarget = 'landing' | 'rules' | 'setup' | 'game';
+type NavigateTarget = "landing" | "rules" | "setup" | "game";
 
 type GameConfig = {
   round: number;
   team1Name: string;
   team2Name: string;
   startingTeam: string;
-  startingRole: 'STABILIZING' | 'SABOTAGING';
+  startingRole: "STABILIZING" | "SABOTAGING";
 };
 
 type TeamSetupProps = {
@@ -17,8 +17,8 @@ type TeamSetupProps = {
 };
 
 const TeamSetup = ({ onNavigate, onConfigSet }: TeamSetupProps) => {
-  const [team1Name, setTeam1Name] = useState('TEAM ALPHA');
-  const [team2Name, setTeam2Name] = useState('TEAM BRAVO');
+  const [team1Name, setTeam1Name] = useState("TEAM ALPHA");
+  const [team2Name, setTeam2Name] = useState("TEAM BRAVO");
   const [round, setRound] = useState(1);
 
   const handleStart = () => {
@@ -26,17 +26,17 @@ const TeamSetup = ({ onNavigate, onConfigSet }: TeamSetupProps) => {
       round,
       team1Name,
       team2Name,
-      startingTeam: round === 1 ? 'TEAM ALPHA' : 'TEAM BRAVO',
-      startingRole: 'STABILIZING',
+      startingTeam: round === 1 ? "TEAM ALPHA" : "TEAM BRAVO",
+      startingRole: "STABILIZING",
     };
     onConfigSet(config);
-    onNavigate('game');
+    onNavigate("game");
   };
 
   return (
     <div className="team-setup">
       <div className="setup-container">
-        <button className="btn-back" onClick={() => onNavigate('landing')}>
+        <button className="btn-back" onClick={() => onNavigate("landing")}>
           &lt; BACK
         </button>
 
@@ -67,7 +67,10 @@ const TeamSetup = ({ onNavigate, onConfigSet }: TeamSetupProps) => {
 
             <div className="input-group">
               <label>STARTING ROUND</label>
-              <select value={round} onChange={(e) => setRound(Number(e.target.value))}>
+              <select
+                value={round}
+                onChange={(e) => setRound(Number(e.target.value))}
+              >
                 <option value={1}>ROUND 1</option>
                 <option value={2}>ROUND 2</option>
               </select>

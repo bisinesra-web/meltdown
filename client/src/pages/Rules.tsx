@@ -1,7 +1,7 @@
-import React from 'react';
-import './Rules.css';
+import React from "react";
+import "./Rules.css";
 
-type NavigateTarget = 'landing' | 'rules' | 'setup' | 'game';
+type NavigateTarget = "landing" | "rules" | "setup" | "game";
 
 type RulesProps = {
   onNavigate: (target: NavigateTarget) => void;
@@ -11,7 +11,7 @@ const Rules = ({ onNavigate }: RulesProps) => {
   return (
     <div className="rules-page">
       <div className="rules-container">
-        <button className="btn-back" onClick={() => onNavigate('landing')}>
+        <button className="btn-back" onClick={() => onNavigate("landing")}>
           &lt; BACK
         </button>
 
@@ -39,22 +39,20 @@ const Rules = ({ onNavigate }: RulesProps) => {
               <p>
                 <strong>Team 1:</strong> STABILIZING
               </p>
-              <p style={{ marginLeft: '1rem', color: 'var(--dark-green)' }}>
+              <p style={{ marginLeft: "1rem", color: "var(--dark-green)" }}>
                 • Operator + Monitor isolated
                 <br />
                 • Cannot communicate except via public channel
-                <br />
-                • Must keep reactor stable
+                <br />• Must keep reactor stable
               </p>
               <p>
                 <strong>Team 2:</strong> SABOTAGING
               </p>
-              <p style={{ marginLeft: '1rem', color: 'var(--dark-green)' }}>
+              <p style={{ marginLeft: "1rem", color: "var(--dark-green)" }}>
                 • Both in war room together
                 <br />
                 • Can see opponent communications
-                <br />
-                • Goal: Cause meltdown
+                <br />• Goal: Cause meltdown
               </p>
             </div>
           </section>
@@ -65,9 +63,9 @@ const Rules = ({ onNavigate }: RulesProps) => {
               <p>ROLES SWAP</p>
               <p
                 style={{
-                  marginLeft: '1rem',
-                  color: 'var(--dark-green)',
-                  marginTop: '1rem',
+                  marginLeft: "1rem",
+                  color: "var(--dark-green)",
+                  marginTop: "1rem",
                 }}
               >
                 Team 1 becomes SABOTAGING
@@ -96,7 +94,8 @@ const Rules = ({ onNavigate }: RulesProps) => {
                 <strong>Goal:</strong> Survive 10 minutes with minimal damage
               </p>
               <p>
-                <strong>Challenge:</strong> Cannot communicate directly - must use code/cipher
+                <strong>Challenge:</strong> Cannot communicate directly - must
+                use code/cipher
               </p>
             </div>
           </section>
@@ -120,7 +119,8 @@ const Rules = ({ onNavigate }: RulesProps) => {
                 <strong>Goal:</strong> Crack their code & cause maximum damage
               </p>
               <p>
-                <strong>Advantage:</strong> Direct collaboration & message visibility
+                <strong>Advantage:</strong> Direct collaboration & message
+                visibility
               </p>
             </div>
           </section>
@@ -129,20 +129,25 @@ const Rules = ({ onNavigate }: RulesProps) => {
             <h2>SCORING</h2>
             <div className="rule-content">
               <p>
-                <strong>Stability Points:</strong> Awarded for maintaining reactor health
+                <strong>Stability Points:</strong> Awarded for maintaining
+                reactor health
               </p>
               <p>
                 <strong>Damage Taken:</strong> Subtracted from final score
               </p>
               <p>
-                <strong>Win Condition:</strong> Highest combined score across both rounds
+                <strong>Win Condition:</strong> Highest combined score across
+                both rounds
               </p>
             </div>
           </section>
         </div>
 
         <div className="action-buttons">
-          <button className="btn btn-primary" onClick={() => onNavigate('setup')}>
+          <button
+            className="btn btn-primary"
+            onClick={() => onNavigate("setup")}
+          >
             START GAME
           </button>
         </div>

@@ -1,1 +1,1 @@
-export const serverStatus = 'not-ready';
+export const serverStatus = "not-ready";

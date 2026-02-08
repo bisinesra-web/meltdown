@@ -1,1 +1,1 @@
-export const gameLogicStatus = 'not-ready';
+export const gameLogicStatus = "not-ready";

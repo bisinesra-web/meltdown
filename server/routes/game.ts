@@ -1,1 +1,1 @@
-export const gameRoutesStatus = 'not-ready';
+export const gameRoutesStatus = "not-ready";

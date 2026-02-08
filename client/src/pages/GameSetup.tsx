@@ -1,14 +1,14 @@
-import React, { useEffect, useState } from 'react';
-import './GameSetup.css';
+import React, { useEffect, useState } from "react";
+import "./GameSetup.css";
 
-type NavigateTarget = 'landing' | 'rules' | 'setup' | 'game';
+type NavigateTarget = "landing" | "rules" | "setup" | "game";
 
 type GameConfig = {
   round: number;
   team1Name: string;
   team2Name: string;
   startingTeam: string;
-  startingRole: 'STABILIZING' | 'SABOTAGING';
+  startingRole: "STABILIZING" | "SABOTAGING";
 };
 
 type GameSetupProps = {
@@ -40,12 +40,14 @@ const GameSetup = ({ config, onNavigate }: GameSetupProps) => {
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const startingRole = config?.startingRole || 'STABILIZING';
+  const startingRole = config?.startingRole || "STABILIZING";
   const opposingTeam =
-    config?.startingTeam === config?.team1Name ? config?.team2Name : config?.team1Name;
+    config?.startingTeam === config?.team1Name
+      ? config?.team2Name
+      : config?.team1Name;
 
   return (
     <div className="game-setup">
@@ -63,7 +65,9 @@ const GameSetup = ({ config, onNavigate }: GameSetupProps) => {
                 <div className="team-card opponent">
                   <h2>{opposingTeam}</h2>
                   <p className="role-label">
-                    {startingRole === 'STABILIZING' ? 'SABOTAGING' : 'STABILIZING'}
+                    {startingRole === "STABILIZING"
+                      ? "SABOTAGING"
+                      : "STABILIZING"}
                   </p>
                 </div>
               </div>
@@ -73,10 +77,16 @@ const GameSetup = ({ config, onNavigate }: GameSetupProps) => {
                 <p className="countdown pulse">3... 2... 1...</p>
               </div>
 
-              <button className="btn btn-primary" onClick={() => setGameStarted(true)}>
+              <button
+                className="btn btn-primary"
+                onClick={() => setGameStarted(true)}
+              >
                 BEGIN ROUND
               </button>
-              <button className="btn btn-secondary" onClick={() => onNavigate('setup')}>
+              <button
+                className="btn btn-secondary"
+                onClick={() => onNavigate("setup")}
+              >
                 BACK TO SETUP
               </button>
             </div>
@@ -85,9 +95,13 @@ const GameSetup = ({ config, onNavigate }: GameSetupProps) => {
           <>
             <div className="game-header">
               <div className="timer">
-                <span className={timeLeft < 120 ? 'warning' : ''}>{formatTime(timeLeft)}</span>
+                <span className={timeLeft < 120 ? "warning" : ""}>
+                  {formatTime(timeLeft)}
+                </span>
               </div>
-              <h1 className="round-title">{config?.round && `ROUND ${config.round}`}</h1>
+              <h1 className="round-title">
+                {config?.round && `ROUND ${config.round}`}
+              </h1>
               <div className="health-display">
                 <span>REACTOR: {reactorHealth}%</span>
               </div>
@@ -108,10 +122,10 @@ const GameSetup = ({ config, onNavigate }: GameSetupProps) => {
                   <div
                     className={`health-fill ${
                       reactorHealth < 30
-                        ? 'critical'
+                        ? "critical"
                         : reactorHealth < 60
-                          ? 'warning'
-                          : 'stable'
+                          ? "warning"
+                          : "stable"
                     }`}
                     style={{ width: `${reactorHealth}%` }}
                   ></div>
@@ -123,7 +137,9 @@ const GameSetup = ({ config, onNavigate }: GameSetupProps) => {
                 <h2>OPPONENT</h2>
                 <p className="opponent-name">{opposingTeam}</p>
                 <p className="opponent-role">
-                  {startingRole === 'STABILIZING' ? 'SABOTAGING' : 'STABILIZING'}
+                  {startingRole === "STABILIZING"
+                    ? "SABOTAGING"
+                    : "STABILIZING"}
                 </p>
               </div>
             </div>
@@ -132,7 +148,10 @@ const GameSetup = ({ config, onNavigate }: GameSetupProps) => {
               <div className="round-end">
                 <h2>ROUND COMPLETE</h2>
                 <p>Final Health: {reactorHealth}%</p>
-                <button className="btn btn-primary" onClick={() => onNavigate('setup')}>
+                <button
+                  className="btn btn-primary"
+                  onClick={() => onNavigate("setup")}
+                >
                   NEXT ROUND
                 </button>
               </div>

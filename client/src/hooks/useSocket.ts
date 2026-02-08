@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import type { Socket } from 'socket.io-client';
+import { useEffect, useState } from "react";
+import type { Socket } from "socket.io-client";
 
 const useSocket = (url: string) => {
   const [socket, setSocket] = useState<Socket | null>(null);

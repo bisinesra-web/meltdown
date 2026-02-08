@@ -1,5 +1,3 @@
-import './GameSetup.css';
-
 .game-setup {
   min-height: 100vh;
   display: flex;

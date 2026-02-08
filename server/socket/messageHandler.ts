@@ -1,1 +1,1 @@
-export const messageHandlerStatus = 'not-ready';
+export const messageHandlerStatus = "not-ready";

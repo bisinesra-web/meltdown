@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from "react";
 import {
   AmbientLight,
   Color,
@@ -7,18 +7,21 @@ import {
   PerspectiveCamera,
   Scene,
   WebGLRenderer,
-} from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
-import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
-import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-import { gsap } from 'gsap';
-import '@fontsource-variable/jetbrains-mono';
-import './App.css';
+} from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
+import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
+import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+import { gsap } from "gsap";
+import "@fontsource-variable/jetbrains-mono";
+import "./App.css";
 
-
-type ScrambleTextFn = (element: HTMLElement, finalText: string, duration?: number) => void;
+type ScrambleTextFn = (
+  element: HTMLElement,
+  finalText: string,
+  duration?: number,
+) => void;
 
 function App() {
   const mountRef = useRef<HTMLDivElement | null>(null);
@@ -26,7 +29,9 @@ function App() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const scrambleTextRef = useRef<ScrambleTextFn | null>(null);
   const lockedLettersRef = useRef(0);
-  const scrambleIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const scrambleIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
+    null,
+  );
 
   useEffect(() => {
     if (!mountRef.current) return;
@@ -38,7 +43,7 @@ function App() {
       45,
       window.innerWidth / window.innerHeight,
       0.1,
-      1000
+      1000,
     );
     camera.position.set(50, 50, 50);
 
@@ -60,7 +65,7 @@ function App() {
       targetCameraPos.x = baseCameraPos.x + mouse.x * movementRange;
       targetCameraPos.y = baseCameraPos.y - mouse.y * movementRange;
     };
-    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener("mousemove", handleMouseMove);
 
     scene.add(new AmbientLight(0xffffff, 0.5));
 
@@ -69,21 +74,21 @@ function App() {
     scene.add(dirLight);
 
     const scrambleText: ScrambleTextFn = (element, finalText, duration = 2) => {
-      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%&*';
+      const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%&*";
       const textLength = finalText.length;
       let iteration = 0;
       const totalIterations = duration * 30;
 
       const interval = setInterval(() => {
         element.innerText = finalText
-          .split('')
+          .split("")
           .map((letter, index) => {
             if (index < iteration / (totalIterations / textLength)) {
               return finalText[index];
             }
             return chars[Math.floor(Math.random() * chars.length)];
           })
-          .join('');
+          .join("");
 
         iteration++;
 
@@ -96,8 +101,8 @@ function App() {
 
     scrambleTextRef.current = scrambleText;
 
-    const finalText = 'MELTDOWN';
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%&*';
+    const finalText = "MELTDOWN";
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%&*";
 
     // Start continuous scramble animation
     const startContinuousScramble = () => {
@@ -109,7 +114,7 @@ function App() {
         if (!titleRef.current) return;
 
         titleRef.current.innerText = finalText
-          .split('')
+          .split("")
           .map((letter, index) => {
             // Lock letters based on how many elements have turned red (every 2 elements = 1 letter)
             if (index < lockedLettersRef.current) {
@@ -117,7 +122,7 @@ function App() {
             }
             return chars[Math.floor(Math.random() * chars.length)];
           })
-          .join('');
+          .join("");
       }, 1000 / 15); // 30 FPS
     };
 
@@ -125,47 +130,52 @@ function App() {
     // startContinuousScramble();
 
     const dracoLoader = new DRACOLoader();
-    dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+    dracoLoader.setDecoderPath(
+      "https://www.gstatic.com/draco/versioned/decoders/1.5.6/",
+    );
 
     const loader = new GLTFLoader();
     loader.setDRACOLoader(dracoLoader);
     loader.setMeshoptDecoder(MeshoptDecoder);
     loader.load(
-      '/plant-compressed.glb',
+      "/plant-compressed.glb",
       (gltf) => {
         const model = gltf.scene;
         scene.add(model);
-        console.log('Model loaded successfully');
+        console.log("Model loaded successfully");
 
         // Start scrambling animation after model loads
         startContinuousScramble();
 
         const materialNames = [
-          'auxventb',
-          'transmissiona',
-          'transmissionb',
-          'waterchannela',
-          'waterchannelb',
-          'auxventa',
-          'alternator',
-          'towerb',
-          'reactorb',
-          'poola',
-          'reactora',
-          'auxilary',
-          'pump',
-          'towera',
-          'poolb',
-          'radiator',
+          "auxventb",
+          "transmissiona",
+          "transmissionb",
+          "waterchannela",
+          "waterchannelb",
+          "auxventa",
+          "alternator",
+          "towerb",
+          "reactorb",
+          "poola",
+          "reactora",
+          "auxilary",
+          "pump",
+          "towera",
+          "poolb",
+          "radiator",
         ];
 
         for (let i = materialNames.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
-          [materialNames[i], materialNames[j]] = [materialNames[j]!, materialNames[i]!];
+          [materialNames[i], materialNames[j]] = [
+            materialNames[j]!,
+            materialNames[i]!,
+          ];
         }
 
         let currentIndex = 0;
-        const targetColor = new Color('#723435');
+        const targetColor = new Color("#723435");
 
         const intervalId: ReturnType<typeof setInterval> = setInterval(() => {
           if (currentIndex >= materialNames.length) {
@@ -184,32 +194,35 @@ function App() {
 
             materials.forEach((mat) => {
               if (mat.name !== targetMaterial) return;
-              if (!('color' in mat) || !(mat.color instanceof Color)) return;
+              if (!("color" in mat) || !(mat.color instanceof Color)) return;
 
               gsap.to(mat.color, {
                 r: targetColor.r,
                 g: targetColor.g,
                 b: targetColor.b,
                 duration: 0.4,
-                ease: 'power2.inOut',
+                ease: "power2.inOut",
               });
             });
           });
 
           // Update locked letters: every 2 elements = 1 letter locked
           lockedLettersRef.current = Math.floor((currentIndex + 1) / 2);
-          
+
           currentIndex++;
         }, 300);
 
         model.userData.intervalId = intervalId;
       },
       (progress) => {
-        console.log('Loading progress:', (progress.loaded / progress.total) * 100 + '%');
+        console.log(
+          "Loading progress:",
+          (progress.loaded / progress.total) * 100 + "%",
+        );
       },
       (error) => {
-        console.error('Error loading model:', error);
-      }
+        console.error("Error loading model:", error);
+      },
     );
 
     const composer = new EffectComposer(renderer);
@@ -222,7 +235,7 @@ function App() {
       renderer.setSize(window.innerWidth, window.innerHeight);
       composer.setSize(window.innerWidth, window.innerHeight);
     };
-    window.addEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
 
     function animate() {
       requestAnimationFrame(animate);
@@ -236,9 +249,9 @@ function App() {
     animate();
 
     return () => {
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('mousemove', handleMouseMove);
-      gsap.killTweensOf('*');
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("mousemove", handleMouseMove);
+      gsap.killTweensOf("*");
       if (scrambleIntervalRef.current) {
         clearInterval(scrambleIntervalRef.current);
       }
@@ -252,13 +265,11 @@ function App() {
     };
   }, []);
 
-
   return (
     <div ref={containerRef} className="main-container">
       <div className="grid-background" />
       <div className="vignette" />
-      <div ref={mountRef} className="canvas-section">
-      </div>
+      <div ref={mountRef} className="canvas-section"></div>
       <section className="title-section">
         <h1 ref={titleRef} className="meltdown-title">
           LWV4ZXWU

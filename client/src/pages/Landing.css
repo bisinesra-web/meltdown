@@ -1,5 +1,3 @@
-import './Landing.css';
-
 .landing {
   display: flex;
   align-items: center;
@@ -21,7 +19,7 @@ import './Landing.css';
   font-size: 0.9rem;
   margin-bottom: 2rem;
   color: var(--dark-green);
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
 }
 
 .reactor-art pre {
