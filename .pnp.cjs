@@ -47,6 +47,7 @@ const RAW_RUNTIME_STATE =
           ["locomotive-scroll", "npm:5.0.1"],\
           ["prettier", "npm:3.8.1"],\
           ["reactor-game", "workspace:."],\
+          ["typescript", "patch:typescript@npm%3A5.9.3#optional!builtin<compat/typescript>::version=5.9.3&hash=5786d5"],\
           ["typescript-eslint", "virtual:82626a79a9f8104c9cc7f4965de24d5ffd6f8e096c183bcf79651d24f19eb5df8d701c31e715697baac53dba540487d77a56b98165989518f0b88ab2b02fc00d#npm:8.54.0"]\
         ],\
         "linkType": "SOFT"\
@@ -1913,7 +1914,7 @@ const RAW_RUNTIME_STATE =
         "packageDependencies": [\
           ["@tanstack/react-router", "virtual:52559bc7a23c1a5cc43f928635bcec09b168c6fbcdf47eb91629b72fe234fd56f7919b97564d96c240b5124ba5e9edf82f582f7f38ff04c70441ba87f1d6a408#npm:1.158.4"],\
           ["@tanstack/react-router-devtools", "virtual:52559bc7a23c1a5cc43f928635bcec09b168c6fbcdf47eb91629b72fe234fd56f7919b97564d96c240b5124ba5e9edf82f582f7f38ff04c70441ba87f1d6a408#npm:1.158.4"],\
-          ["@tanstack/router-core", null],\
+          ["@tanstack/router-core", "npm:1.158.4"],\
           ["@tanstack/router-devtools-core", "virtual:6e1fb44ec38279ded30a87166eaf681e382bf8de504cb5561604e4a1fcc35998904b9cf35243a615c8d070c01c2f2591d4eea43850dc38f931b8e59e36a4d1ea#npm:1.158.4"],\
           ["@types/react", "npm:19.2.13"],\
           ["@types/react-dom", "virtual:52559bc7a23c1a5cc43f928635bcec09b168c6fbcdf47eb91629b72fe234fd56f7919b97564d96c240b5124ba5e9edf82f582f7f38ff04c70441ba87f1d6a408#npm:19.2.3"],\
@@ -1990,7 +1991,7 @@ const RAW_RUNTIME_STATE =
       ["virtual:6e1fb44ec38279ded30a87166eaf681e382bf8de504cb5561604e4a1fcc35998904b9cf35243a615c8d070c01c2f2591d4eea43850dc38f931b8e59e36a4d1ea#npm:1.158.4", {\
         "packageLocation": "./.yarn/__virtual__/@tanstack-router-devtools-core-virtual-300b539afa/2/.yarn/berry/cache/@tanstack-router-devtools-core-npm-1.158.4-2bef064460-10c0.zip/node_modules/@tanstack/router-devtools-core/",\
         "packageDependencies": [\
-          ["@tanstack/router-core", null],\
+          ["@tanstack/router-core", "npm:1.158.4"],\
           ["@tanstack/router-devtools-core", "virtual:6e1fb44ec38279ded30a87166eaf681e382bf8de504cb5561604e4a1fcc35998904b9cf35243a615c8d070c01c2f2591d4eea43850dc38f931b8e59e36a4d1ea#npm:1.158.4"],\
           ["@types/csstype", null],\
           ["@types/tanstack__router-core", null],\
@@ -2457,7 +2458,7 @@ const RAW_RUNTIME_STATE =
           ["ignore", "npm:7.0.5"],\
           ["natural-compare", "npm:1.4.0"],\
           ["ts-api-utils", "virtual:8ce1678c08f6542fcb9be9167d62e251158cd5088436bd0c1e56a7b3c4e1f753bf8ab616ddf935b3c90ef2dcae154328817642f6d006c015c9e8963b0d91e046#npm:2.4.0"],\
-          ["typescript", null]\
+          ["typescript", "patch:typescript@npm%3A5.9.3#optional!builtin<compat/typescript>::version=5.9.3&hash=5786d5"]\
         ],\
         "packagePeers": [\
           "@types/eslint",\
@@ -2490,7 +2491,7 @@ const RAW_RUNTIME_STATE =
           ["@typescript-eslint/visitor-keys", "npm:8.54.0"],\
           ["debug", "virtual:85d5d916b6a745b2f8de0d4b1704b7084bdd4f7573c1ef5d1c877f2c866045a9b29fe2bc752d1b73e531c378a0518dd3f9fa187b31427fb9bacbe34b14715dde#npm:4.4.3"],\
           ["eslint", "virtual:82626a79a9f8104c9cc7f4965de24d5ffd6f8e096c183bcf79651d24f19eb5df8d701c31e715697baac53dba540487d77a56b98165989518f0b88ab2b02fc00d#npm:10.0.0"],\
-          ["typescript", null]\
+          ["typescript", "patch:typescript@npm%3A5.9.3#optional!builtin<compat/typescript>::version=5.9.3&hash=5786d5"]\
         ],\
         "packagePeers": [\
           "@types/eslint",\
@@ -2517,7 +2518,7 @@ const RAW_RUNTIME_STATE =
           ["@typescript-eslint/tsconfig-utils", "virtual:a0f81bf5b3b50cc19151b24f0afdcb9f84d3bc0610da638fc079fb0677905a7fd8ac1bfeec6510771cd161af7f06a60dc12a4c4ca6710b696a86b7d11e1ba647#npm:8.54.0"],\
           ["@typescript-eslint/types", "npm:8.54.0"],\
           ["debug", "virtual:85d5d916b6a745b2f8de0d4b1704b7084bdd4f7573c1ef5d1c877f2c866045a9b29fe2bc752d1b73e531c378a0518dd3f9fa187b31427fb9bacbe34b14715dde#npm:4.4.3"],\
-          ["typescript", null]\
+          ["typescript", "patch:typescript@npm%3A5.9.3#optional!builtin<compat/typescript>::version=5.9.3&hash=5786d5"]\
         ],\
         "packagePeers": [\
           "@types/typescript",\
@@ -2550,7 +2551,7 @@ const RAW_RUNTIME_STATE =
         "packageDependencies": [\
           ["@types/typescript", null],\
           ["@typescript-eslint/tsconfig-utils", "virtual:a0f81bf5b3b50cc19151b24f0afdcb9f84d3bc0610da638fc079fb0677905a7fd8ac1bfeec6510771cd161af7f06a60dc12a4c4ca6710b696a86b7d11e1ba647#npm:8.54.0"],\
-          ["typescript", null]\
+          ["typescript", "patch:typescript@npm%3A5.9.3#optional!builtin<compat/typescript>::version=5.9.3&hash=5786d5"]\
         ],\
         "packagePeers": [\
           "@types/typescript",\
@@ -2579,7 +2580,7 @@ const RAW_RUNTIME_STATE =
           ["debug", "virtual:85d5d916b6a745b2f8de0d4b1704b7084bdd4f7573c1ef5d1c877f2c866045a9b29fe2bc752d1b73e531c378a0518dd3f9fa187b31427fb9bacbe34b14715dde#npm:4.4.3"],\
           ["eslint", "virtual:82626a79a9f8104c9cc7f4965de24d5ffd6f8e096c183bcf79651d24f19eb5df8d701c31e715697baac53dba540487d77a56b98165989518f0b88ab2b02fc00d#npm:10.0.0"],\
           ["ts-api-utils", "virtual:8ce1678c08f6542fcb9be9167d62e251158cd5088436bd0c1e56a7b3c4e1f753bf8ab616ddf935b3c90ef2dcae154328817642f6d006c015c9e8963b0d91e046#npm:2.4.0"],\
-          ["typescript", null]\
+          ["typescript", "patch:typescript@npm%3A5.9.3#optional!builtin<compat/typescript>::version=5.9.3&hash=5786d5"]\
         ],\
         "packagePeers": [\
           "@types/eslint",\
@@ -2621,7 +2622,7 @@ const RAW_RUNTIME_STATE =
           ["semver", "npm:7.7.3"],\
           ["tinyglobby", "npm:0.2.15"],\
           ["ts-api-utils", "virtual:8ce1678c08f6542fcb9be9167d62e251158cd5088436bd0c1e56a7b3c4e1f753bf8ab616ddf935b3c90ef2dcae154328817642f6d006c015c9e8963b0d91e046#npm:2.4.0"],\
-          ["typescript", null]\
+          ["typescript", "patch:typescript@npm%3A5.9.3#optional!builtin<compat/typescript>::version=5.9.3&hash=5786d5"]\
         ],\
         "packagePeers": [\
           "@types/typescript",\
@@ -2649,7 +2650,7 @@ const RAW_RUNTIME_STATE =
           ["@typescript-eslint/typescript-estree", "virtual:0524272f8b1de30cc99d93eeee04f980a99078d0a8a1f1fbe2f4700969d2539bffc134f3b153828da8407b3fb0dc53d2a847d0ec9c6cc18394190c75997e4b02#npm:8.54.0"],\
           ["@typescript-eslint/utils", "virtual:0524272f8b1de30cc99d93eeee04f980a99078d0a8a1f1fbe2f4700969d2539bffc134f3b153828da8407b3fb0dc53d2a847d0ec9c6cc18394190c75997e4b02#npm:8.54.0"],\
           ["eslint", "virtual:82626a79a9f8104c9cc7f4965de24d5ffd6f8e096c183bcf79651d24f19eb5df8d701c31e715697baac53dba540487d77a56b98165989518f0b88ab2b02fc00d#npm:10.0.0"],\
-          ["typescript", null]\
+          ["typescript", "patch:typescript@npm%3A5.9.3#optional!builtin<compat/typescript>::version=5.9.3&hash=5786d5"]\
         ],\
         "packagePeers": [\
           "@types/eslint",\
@@ -6063,6 +6064,7 @@ const RAW_RUNTIME_STATE =
           ["locomotive-scroll", "npm:5.0.1"],\
           ["prettier", "npm:3.8.1"],\
           ["reactor-game", "workspace:."],\
+          ["typescript", "patch:typescript@npm%3A5.9.3#optional!builtin<compat/typescript>::version=5.9.3&hash=5786d5"],\
           ["typescript-eslint", "virtual:82626a79a9f8104c9cc7f4965de24d5ffd6f8e096c183bcf79651d24f19eb5df8d701c31e715697baac53dba540487d77a56b98165989518f0b88ab2b02fc00d#npm:8.54.0"]\
         ],\
         "linkType": "SOFT"\
@@ -6078,6 +6080,7 @@ const RAW_RUNTIME_STATE =
           ["@gltf-transform/extensions", "npm:4.3.0"],\
           ["@tanstack/react-router", "virtual:52559bc7a23c1a5cc43f928635bcec09b168c6fbcdf47eb91629b72fe234fd56f7919b97564d96c240b5124ba5e9edf82f582f7f38ff04c70441ba87f1d6a408#npm:1.158.4"],\
           ["@tanstack/react-router-devtools", "virtual:52559bc7a23c1a5cc43f928635bcec09b168c6fbcdf47eb91629b72fe234fd56f7919b97564d96c240b5124ba5e9edf82f582f7f38ff04c70441ba87f1d6a408#npm:1.158.4"],\
+          ["@tanstack/router-core", "npm:1.158.4"],\
           ["@types/node", "npm:25.2.2"],\
           ["@types/react", "npm:19.2.13"],\
           ["@types/react-dom", "virtual:52559bc7a23c1a5cc43f928635bcec09b168c6fbcdf47eb91629b72fe234fd56f7919b97564d96c240b5124ba5e9edf82f582f7f38ff04c70441ba87f1d6a408#npm:19.2.3"],\
@@ -6893,7 +6896,7 @@ const RAW_RUNTIME_STATE =
         "packageDependencies": [\
           ["@types/typescript", null],\
           ["ts-api-utils", "virtual:8ce1678c08f6542fcb9be9167d62e251158cd5088436bd0c1e56a7b3c4e1f753bf8ab616ddf935b3c90ef2dcae154328817642f6d006c015c9e8963b0d91e046#npm:2.4.0"],\
-          ["typescript", null]\
+          ["typescript", "patch:typescript@npm%3A5.9.3#optional!builtin<compat/typescript>::version=5.9.3&hash=5786d5"]\
         ],\
         "packagePeers": [\
           "@types/typescript",\
@@ -6972,7 +6975,7 @@ const RAW_RUNTIME_STATE =
           ["@typescript-eslint/typescript-estree", "virtual:0524272f8b1de30cc99d93eeee04f980a99078d0a8a1f1fbe2f4700969d2539bffc134f3b153828da8407b3fb0dc53d2a847d0ec9c6cc18394190c75997e4b02#npm:8.54.0"],\
           ["@typescript-eslint/utils", "virtual:0524272f8b1de30cc99d93eeee04f980a99078d0a8a1f1fbe2f4700969d2539bffc134f3b153828da8407b3fb0dc53d2a847d0ec9c6cc18394190c75997e4b02#npm:8.54.0"],\
           ["eslint", "virtual:82626a79a9f8104c9cc7f4965de24d5ffd6f8e096c183bcf79651d24f19eb5df8d701c31e715697baac53dba540487d77a56b98165989518f0b88ab2b02fc00d#npm:10.0.0"],\
-          ["typescript", null],\
+          ["typescript", "patch:typescript@npm%3A5.9.3#optional!builtin<compat/typescript>::version=5.9.3&hash=5786d5"],\
           ["typescript-eslint", "virtual:82626a79a9f8104c9cc7f4965de24d5ffd6f8e096c183bcf79651d24f19eb5df8d701c31e715697baac53dba540487d77a56b98165989518f0b88ab2b02fc00d#npm:8.54.0"]\
         ],\
         "packagePeers": [\
