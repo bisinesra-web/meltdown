@@ -1,64 +1,36 @@
-// @ts-check
-import js from "@eslint/js";
-import tseslint from "typescript-eslint";
-import reactHooks from "eslint-plugin-react-hooks";
-import reactRefresh from "eslint-plugin-react-refresh";
-import eslintConfigPrettier from "eslint-config-prettier";
+import config from 'eslint-config-xo'
+import eslintPluginUnicorn from 'eslint-plugin-unicorn'
+import react from 'eslint-plugin-react'
+import stylistic from '@stylistic/eslint-plugin'
+import { defineConfig } from 'eslint/config'
+import pluginRouter from '@tanstack/eslint-plugin-router'
+import globals from 'globals'
 
-export default [
-  // Global ignores
+export default defineConfig([
   {
-    ignores: [
-      "**/dist/**",
-      "**/node_modules/**",
-      "**/build/**",
-      "eslint.config.js",
-    ],
-  },
+    files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx', 'eslint.config.js'],
+    extends: [config,
+      eslintPluginUnicorn.configs.recommended,
+      stylistic.configs.recommended,
+      react.configs.flat.recommended,
 
-  // Base JS recommended rules
-  js.configs.recommended,
+      pluginRouter.configs['flat/recommended']],
 
-  // TypeScript strict + stylistic rules for all .ts/.tsx files
-  ...tseslint.configs.strictTypeChecked,
-  ...tseslint.configs.stylisticTypeChecked,
-
-  // TypeScript parser options (project-aware linting)
-  {
+    rules: {
+      '@stylistic/max-len': ['error', {
+        code: 100, ignoreComments: true, ignoreStrings: true, ignoreTemplateLiterals: true,
+      }],
+      'func-name-matching': ['off'],
+    },
     languageOptions: {
       parserOptions: {
-        projectService: true,
-        tsconfigRootDir: import.meta.dirname,
+        ecmaFeatures: {
+          jsx: true,
+        },
+      },
+      globals: {
+        ...globals.browser,
       },
     },
   },
-
-  // Disable strict-null-check rules for vite.config.ts (uses a separate tsconfig)
-  {
-    files: ["client/vite.config.ts"],
-    rules: {
-      "@typescript-eslint/no-unnecessary-boolean-literal-compare": "off",
-      "@typescript-eslint/no-unnecessary-condition": "off",
-      "@typescript-eslint/prefer-nullish-coalescing": "off",
-    },
-  },
-
-  // React rules for client .tsx files
-  {
-    files: ["client/src/**/*.{ts,tsx}"],
-    plugins: {
-      "react-hooks": reactHooks,
-      "react-refresh": reactRefresh,
-    },
-    rules: {
-      ...reactHooks.configs.recommended.rules,
-      "react-refresh/only-export-components": [
-        "warn",
-        { allowConstantExport: true },
-      ],
-    },
-  },
-
-  // Turn off all formatting rules that conflict with Prettier
-  eslintConfigPrettier,
-];
+])

@@ -11,3 +11,6 @@ dist/
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+game.db
+game.db-shm
+game.db-wal

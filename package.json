@@ -18,18 +18,22 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-unicorn": "^62.0.0",
     "gsap": "^3.14.2",
     "locomotive-scroll": "^5.0.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "eslint": "^10.0.0",
+    "@stylistic/eslint-plugin": "^5.7.1",
+    "@tanstack/eslint-plugin-router": "^1.155.0",
+    "eslint": ">=10",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-config-xo": "^0.50.0",
     "eslint-plugin-react-refresh": "^0.5.0",
+    "globals": "^17.3.0",
     "prettier": "^3.8.1",
-    "typescript": "^5.9.3",
-    "typescript-eslint": "^8.54.0"
+    "typescript": "^5.9.3"
   },
   "packageManager": "yarn@4.12.0"
 }

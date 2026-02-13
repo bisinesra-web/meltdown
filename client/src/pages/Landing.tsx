@@ -15,7 +15,7 @@ import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { gsap } from "gsap";
 import "@fontsource-variable/jetbrains-mono";
-import "./App.css";
+import "./Landing.css";
 
 type ScrambleTextFn = (
   element: HTMLElement,
@@ -32,9 +32,11 @@ export default function Landing() {
   const scrambleIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
     null,
   );
+  const initializedRef = useRef(false);
 
   useEffect(() => {
-    if (!mountRef.current) return;
+    if (!mountRef.current || initializedRef.current) return;
+    initializedRef.current = true;
 
     const scene = new Scene();
     scene.background = null;
