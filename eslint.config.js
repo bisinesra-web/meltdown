@@ -5,6 +5,7 @@ import stylistic from '@stylistic/eslint-plugin'
 import { defineConfig } from 'eslint/config'
 import pluginRouter from '@tanstack/eslint-plugin-router'
 import globals from 'globals'
+import tseslint from 'typescript-eslint'
 
 export default defineConfig([
   {
@@ -13,8 +14,11 @@ export default defineConfig([
       eslintPluginUnicorn.configs.recommended,
       stylistic.configs.recommended,
       react.configs.flat.recommended,
+      pluginRouter.configs['flat/recommended'],
+        tseslint.configs.strictTypeChecked,
+  tseslint.configs.stylisticTypeChecked,
 
-      pluginRouter.configs['flat/recommended']],
+],
 
     rules: {
       '@stylistic/max-len': ['error', {
@@ -24,6 +28,7 @@ export default defineConfig([
     },
     languageOptions: {
       parserOptions: {
+        projectService: true,
         ecmaFeatures: {
           jsx: true,
         },

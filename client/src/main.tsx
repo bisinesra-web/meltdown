@@ -8,8 +8,8 @@ import {
   createRouter,
 } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
-import Landing from './pages/Landing'
-import Join from './pages/Join'
+import Landing from './pages/landing'
+import Join from './pages/join'
 
 const rootRoute = createRootRoute({
   component: () => (
