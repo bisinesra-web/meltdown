@@ -7,6 +7,8 @@ import './Admin.css'
 export default function AdminPage() {
   const { token, setToken } = useAdminStore()
   const [roomCodeToFetch, setRoomCodeToFetch] = React.useState('')
+  const [player1Name, setPlayer1Name] = React.useState('Operator')
+  const [player2Name, setPlayer2Name] = React.useState('Saboteur')
 
   // Queries & Mutations
   const {
@@ -31,12 +33,20 @@ export default function AdminPage() {
   } = useGetRoom()
 
   const handleCreateRoom = () => {
-    createRoom()
+    createRoom({ player1: player1Name, player2: player2Name })
   }
 
   const handleGetRoom = () => {
     if (roomCodeToFetch) {
       getRoom(roomCodeToFetch)
+    }
+  }
+
+  const showRoomDetails = (roomId: number) => {
+    const room = rooms?.find(r => r.room_id === roomId)
+    if (room) {
+      setRoomCodeToFetch(room.room_code)
+      getRoom(room.room_code)
     }
   }
 
@@ -71,10 +81,31 @@ export default function AdminPage() {
           </div>
           <div>
             <p className='endpoint-desc'>Generate a new game room.</p>
+            <div style={{
+              display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem',
+            }}
+            >
+              <Input
+                className='admin-input'
+                placeholder='Player 1 Name'
+                value={player1Name}
+                onChange={(event) => {
+                  setPlayer1Name(event.target.value)
+                }}
+              />
+              <Input
+                className='admin-input'
+                placeholder='Player 2 Name'
+                value={player2Name}
+                onChange={(event) => {
+                  setPlayer2Name(event.target.value)
+                }}
+              />
+            </div>
             <button
               className='admin-btn'
               onClick={handleCreateRoom}
-              disabled={isCreatePending || !token}
+              disabled={isCreatePending || !token || !player1Name || !player2Name}
             >
               {isCreatePending ? 'Creating...' : 'Execute /rooms/create'}
             </button>
@@ -131,7 +162,13 @@ export default function AdminPage() {
                 : (rooms && rooms.length > 0
                     ? (
                         rooms.map(room => (
-                          <div key={room.room_id} className='room-item'>
+                          <div
+                            key={room.room_id}
+                            className='room-item'
+                            onClick={() => {
+                              showRoomDetails(room.room_id)
+                            }}
+                          >
                             <span>{room.room_code}</span>
                             <span style={{ opacity: 0.5 }}>{room.room_state ?? 'WAITING'}</span>
                           </div>

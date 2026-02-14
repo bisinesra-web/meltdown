@@ -26,8 +26,8 @@ export default function Join() {
     }
   }
 
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && code.length === 5) {
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter' && code.length === 5) {
       handleSubmit()
     }
   }
@@ -50,7 +50,7 @@ export default function Join() {
             className='code-input'
             value={code}
             onChange={handleCodeChange}
-            onKeyPress={handleKeyPress}
+            onKeyDown={handleKeyDown}
             maxLength={5}
           />
           <button

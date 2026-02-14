@@ -7,8 +7,10 @@ interface RoomRow {
   room_code: string
   created_at: string
   updated_at: string
-  player_1: string | null
-  player_2: string | null
+  player_1_name: string
+  player_2_name: string
+  player_1_secret: string | null
+  player_2_secret: string | null
   room_state: string | null
 }
 
@@ -31,14 +33,43 @@ const authMiddleware = (
   next()
 }
 
-const generateRoomCode = () => Math.random().toString(36).slice(2, 7).toUpperCase()
+const generateCode = (length: number) => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+  let result = ''
+  for (let index = 0; index < length; index++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length))
+  }
 
-router.post('/create', authMiddleware, async (_request, response) => {
+  return result
+}
+
+router.post('/create', authMiddleware, async (request, response) => {
   try {
-    const roomCode = generateRoomCode()
+    const { player1, player2 } = request.body as { player1?: string, player2?: string }
+
+    if (!player1 || !player2) {
+      response.status(400).json({ error: 'player1 and player2 names are required' })
+      return
+    }
+
+    const roomCode = generateCode(5)
+    // Generate 8-digit capital alphanumeric secrets
+    const p1Secret = generateCode(8)
+    const p2Secret = generateCode(8)
+
     await database.run(
-      'INSERT INTO rooms (room_code) VALUES (?)',
+      `INSERT INTO rooms (
+        room_code, 
+        player_1_name, 
+        player_2_name, 
+        player_1_secret, 
+        player_2_secret
+      ) VALUES (?, ?, ?, ?, ?)`,
       roomCode,
+      player1,
+      player2,
+      p1Secret,
+      p2Secret,
     )
 
     const room = await database.get<RoomRow>(

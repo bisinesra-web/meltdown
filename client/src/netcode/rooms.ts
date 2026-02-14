@@ -10,8 +10,10 @@ export const RoomSchema = z.object({
   room_code: z.string(),
   created_at: z.string(),
   updated_at: z.string(),
-  player_1: z.string().nullable(),
-  player_2: z.string().nullable(),
+  player_1_name: z.string(),
+  player_2_name: z.string(),
+  player_1_secret: z.string().nullable().optional(),
+  player_2_secret: z.string().nullable().optional(),
   room_state: z.string().nullable(),
 })
 
@@ -63,8 +65,8 @@ export const useListRooms = () => useQuery({
 export const useCreateRoom = () => {
   const queryClient = useQueryClient()
   return useMutation({
-    async mutationFn() {
-      const data = await fetchWithAuth('/rooms/create', 'POST')
+    async mutationFn(parameters: { player1: string, player2: string }) {
+      const data = await fetchWithAuth('/rooms/create', 'POST', parameters)
       return RoomSchema.parse(data)
     },
     async onSuccess() {

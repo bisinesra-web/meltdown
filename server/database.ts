@@ -17,8 +17,10 @@ export async function initializeDatabase() {
     room_code TEXT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    player_1 TEXT,
-    player_2 TEXT,
+    player_1_name TEXT NOT NULL,
+    player_2_name TEXT NOT NULL,
+    player_1_secret TEXT,
+    player_2_secret TEXT,
     room_state TEXT CHECK(json_valid(room_state))
   );
 `)

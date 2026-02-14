@@ -7024,6 +7024,7 @@ __metadata:
     sqlite3: "npm:^5.1.7"
     tsx: "npm:^4.21.0"
     typescript: "npm:^5.9.3"
+    zod: "npm:^4.3.6"
   languageName: unknown
   linkType: soft
 

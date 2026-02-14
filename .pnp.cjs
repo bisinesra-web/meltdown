@@ -8280,7 +8280,8 @@ const RAW_RUNTIME_STATE =
           ["sqlite", "npm:5.1.1"],\
           ["sqlite3", "virtual:1e0010157c12d5baeceed03cabcad21d1440e13be4baa42ed404da8fc8e922239e2f23fafb460a4ddc44407ea78514b88042c4303e2bf185fed26bc5e47d8479#npm:5.1.7"],\
           ["tsx", "npm:4.21.0"],\
-          ["typescript", "patch:typescript@npm%3A5.9.3#optional!builtin<compat/typescript>::version=5.9.3&hash=5786d5"]\
+          ["typescript", "patch:typescript@npm%3A5.9.3#optional!builtin<compat/typescript>::version=5.9.3&hash=5786d5"],\
+          ["zod", "npm:4.3.6"]\
         ],\
         "linkType": "SOFT"\
       }]\
