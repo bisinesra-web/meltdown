@@ -11,6 +11,11 @@ import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 import Landing from './pages/landing'
 import Join from './pages/join'
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import AdminPage from './pages/admin'
+
+const queryClient = new QueryClient()
+
 const rootRoute = createRootRoute({
   component: () => (
     <>
@@ -42,7 +47,18 @@ const joinRoute = createRoute({
   component: Join,
 })
 
-const routeTree = rootRoute.addChildren([indexRoute, aboutRoute, joinRoute])
+const adminRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/admin',
+  component: AdminPage,
+})
+
+const routeTree = rootRoute.addChildren([
+  indexRoute,
+  aboutRoute,
+  joinRoute,
+  adminRoute,
+])
 
 const router = createRouter({
   routeTree,
@@ -55,7 +71,9 @@ if (rootElement && !rootElement.innerHTML) {
   const root = ReactDOM.createRoot(rootElement)
   const app = (
     <StrictMode>
-      <RouterProvider router={router} />
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
     </StrictMode>
   )
   root.render(app)

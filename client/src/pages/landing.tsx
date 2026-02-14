@@ -281,7 +281,7 @@ export default function Landing() {
   }, [])
 
   return (
-    <div ref={containerReference} className='main-container'>
+    <div ref={containerReference} className='main-container landing-page-body'>
       <div className='grid-background' />
       <div className='vignette' />
       <div ref={mountReference} className='canvas-section'></div>
