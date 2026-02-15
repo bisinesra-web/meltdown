@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-/* eslint-disable */
 // @ts-nocheck
 "use strict";
 
@@ -45,6 +44,7 @@ const RAW_RUNTIME_STATE =
           ["eslint-config-prettier", "virtual:82626a79a9f8104c9cc7f4965de24d5ffd6f8e096c183bcf79651d24f19eb5df8d701c31e715697baac53dba540487d77a56b98165989518f0b88ab2b02fc00d#npm:10.1.8"],\
           ["eslint-config-xo", "virtual:82626a79a9f8104c9cc7f4965de24d5ffd6f8e096c183bcf79651d24f19eb5df8d701c31e715697baac53dba540487d77a56b98165989518f0b88ab2b02fc00d#npm:0.50.0"],\
           ["eslint-plugin-react", "virtual:82626a79a9f8104c9cc7f4965de24d5ffd6f8e096c183bcf79651d24f19eb5df8d701c31e715697baac53dba540487d77a56b98165989518f0b88ab2b02fc00d#npm:7.37.5"],\
+          ["eslint-plugin-react-hooks", "virtual:82626a79a9f8104c9cc7f4965de24d5ffd6f8e096c183bcf79651d24f19eb5df8d701c31e715697baac53dba540487d77a56b98165989518f0b88ab2b02fc00d#npm:7.0.1"],\
           ["eslint-plugin-react-refresh", "virtual:82626a79a9f8104c9cc7f4965de24d5ffd6f8e096c183bcf79651d24f19eb5df8d701c31e715697baac53dba540487d77a56b98165989518f0b88ab2b02fc00d#npm:0.5.0"],\
           ["eslint-plugin-unicorn", "virtual:82626a79a9f8104c9cc7f4965de24d5ffd6f8e096c183bcf79651d24f19eb5df8d701c31e715697baac53dba540487d77a56b98165989518f0b88ab2b02fc00d#npm:62.0.0"],\
           ["globals", "npm:17.3.0"],\
@@ -3555,6 +3555,16 @@ const RAW_RUNTIME_STATE =
         "linkType": "HARD"\
       }]\
     ]],\
+    ["babel-plugin-react-compiler", [\
+      ["npm:1.0.0", {\
+        "packageLocation": "../.yarn/berry/cache/babel-plugin-react-compiler-npm-1.0.0-5beba4221c-10c0.zip/node_modules/babel-plugin-react-compiler/",\
+        "packageDependencies": [\
+          ["@babel/types", "npm:7.29.0"],\
+          ["babel-plugin-react-compiler", "npm:1.0.0"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
     ["balanced-match", [\
       ["npm:1.0.2", {\
         "packageLocation": "../.yarn/berry/cache/balanced-match-npm-1.0.2-a53c126459-10c0.zip/node_modules/balanced-match/",\
@@ -5015,6 +5025,33 @@ const RAW_RUNTIME_STATE =
         "linkType": "HARD"\
       }]\
     ]],\
+    ["eslint-plugin-react-hooks", [\
+      ["npm:7.0.1", {\
+        "packageLocation": "../.yarn/berry/cache/eslint-plugin-react-hooks-npm-7.0.1-218b8cae26-10c0.zip/node_modules/eslint-plugin-react-hooks/",\
+        "packageDependencies": [\
+          ["eslint-plugin-react-hooks", "npm:7.0.1"]\
+        ],\
+        "linkType": "SOFT"\
+      }],\
+      ["virtual:82626a79a9f8104c9cc7f4965de24d5ffd6f8e096c183bcf79651d24f19eb5df8d701c31e715697baac53dba540487d77a56b98165989518f0b88ab2b02fc00d#npm:7.0.1", {\
+        "packageLocation": "./.yarn/__virtual__/eslint-plugin-react-hooks-virtual-d4501b2235/2/.yarn/berry/cache/eslint-plugin-react-hooks-npm-7.0.1-218b8cae26-10c0.zip/node_modules/eslint-plugin-react-hooks/",\
+        "packageDependencies": [\
+          ["@babel/core", "npm:7.29.0"],\
+          ["@babel/parser", "npm:7.29.0"],\
+          ["@types/eslint", null],\
+          ["eslint", "virtual:82626a79a9f8104c9cc7f4965de24d5ffd6f8e096c183bcf79651d24f19eb5df8d701c31e715697baac53dba540487d77a56b98165989518f0b88ab2b02fc00d#npm:10.0.0"],\
+          ["eslint-plugin-react-hooks", "virtual:82626a79a9f8104c9cc7f4965de24d5ffd6f8e096c183bcf79651d24f19eb5df8d701c31e715697baac53dba540487d77a56b98165989518f0b88ab2b02fc00d#npm:7.0.1"],\
+          ["hermes-parser", "npm:0.25.1"],\
+          ["zod", "npm:4.3.6"],\
+          ["zod-validation-error", "virtual:d4501b2235838ed7f300dd2d7c4a43ae42f6e7942e7c8441b6aac096eccc2701c101ec959352d9c09692ee12c32bd400cd93c9b7ec3067f05ec4da74bdd64a2a#npm:4.0.2"]\
+        ],\
+        "packagePeers": [\
+          "@types/eslint",\
+          "eslint"\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
     ["eslint-plugin-react-refresh", [\
       ["npm:0.5.0", {\
         "packageLocation": "../.yarn/berry/cache/eslint-plugin-react-refresh-npm-0.5.0-5e4f69ec34-10c0.zip/node_modules/eslint-plugin-react-refresh/",\
@@ -5959,6 +5996,25 @@ const RAW_RUNTIME_STATE =
         "packageDependencies": [\
           ["function-bind", "npm:1.1.2"],\
           ["hasown", "npm:2.0.2"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
+    ["hermes-estree", [\
+      ["npm:0.25.1", {\
+        "packageLocation": "../.yarn/berry/cache/hermes-estree-npm-0.25.1-d7752f3952-10c0.zip/node_modules/hermes-estree/",\
+        "packageDependencies": [\
+          ["hermes-estree", "npm:0.25.1"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
+    ["hermes-parser", [\
+      ["npm:0.25.1", {\
+        "packageLocation": "../.yarn/berry/cache/hermes-parser-npm-0.25.1-832deac23b-10c0.zip/node_modules/hermes-parser/",\
+        "packageDependencies": [\
+          ["hermes-estree", "npm:0.25.1"],\
+          ["hermes-parser", "npm:0.25.1"]\
         ],\
         "linkType": "HARD"\
       }]\
@@ -8214,6 +8270,7 @@ const RAW_RUNTIME_STATE =
           ["eslint-config-prettier", "virtual:82626a79a9f8104c9cc7f4965de24d5ffd6f8e096c183bcf79651d24f19eb5df8d701c31e715697baac53dba540487d77a56b98165989518f0b88ab2b02fc00d#npm:10.1.8"],\
           ["eslint-config-xo", "virtual:82626a79a9f8104c9cc7f4965de24d5ffd6f8e096c183bcf79651d24f19eb5df8d701c31e715697baac53dba540487d77a56b98165989518f0b88ab2b02fc00d#npm:0.50.0"],\
           ["eslint-plugin-react", "virtual:82626a79a9f8104c9cc7f4965de24d5ffd6f8e096c183bcf79651d24f19eb5df8d701c31e715697baac53dba540487d77a56b98165989518f0b88ab2b02fc00d#npm:7.37.5"],\
+          ["eslint-plugin-react-hooks", "virtual:82626a79a9f8104c9cc7f4965de24d5ffd6f8e096c183bcf79651d24f19eb5df8d701c31e715697baac53dba540487d77a56b98165989518f0b88ab2b02fc00d#npm:7.0.1"],\
           ["eslint-plugin-react-refresh", "virtual:82626a79a9f8104c9cc7f4965de24d5ffd6f8e096c183bcf79651d24f19eb5df8d701c31e715697baac53dba540487d77a56b98165989518f0b88ab2b02fc00d#npm:0.5.0"],\
           ["eslint-plugin-unicorn", "virtual:82626a79a9f8104c9cc7f4965de24d5ffd6f8e096c183bcf79651d24f19eb5df8d701c31e715697baac53dba540487d77a56b98165989518f0b88ab2b02fc00d#npm:62.0.0"],\
           ["globals", "npm:17.3.0"],\
@@ -8246,6 +8303,7 @@ const RAW_RUNTIME_STATE =
           ["@types/three", "npm:0.182.0"],\
           ["@vitejs/plugin-react", "virtual:52559bc7a23c1a5cc43f928635bcec09b168c6fbcdf47eb91629b72fe234fd56f7919b97564d96c240b5124ba5e9edf82f582f7f38ff04c70441ba87f1d6a408#npm:5.1.3"],\
           ["add", "npm:2.0.6"],\
+          ["babel-plugin-react-compiler", "npm:1.0.0"],\
           ["gltf-pipeline", "npm:4.3.0"],\
           ["gltfpack", "npm:1.0.0"],\
           ["gsap", "npm:3.14.2"],\
@@ -10200,6 +10258,28 @@ const RAW_RUNTIME_STATE =
         "packageLocation": "../.yarn/berry/cache/zod-npm-4.3.6-a096e305e6-10c0.zip/node_modules/zod/",\
         "packageDependencies": [\
           ["zod", "npm:4.3.6"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
+    ["zod-validation-error", [\
+      ["npm:4.0.2", {\
+        "packageLocation": "../.yarn/berry/cache/zod-validation-error-npm-4.0.2-1b963160c8-10c0.zip/node_modules/zod-validation-error/",\
+        "packageDependencies": [\
+          ["zod-validation-error", "npm:4.0.2"]\
+        ],\
+        "linkType": "SOFT"\
+      }],\
+      ["virtual:d4501b2235838ed7f300dd2d7c4a43ae42f6e7942e7c8441b6aac096eccc2701c101ec959352d9c09692ee12c32bd400cd93c9b7ec3067f05ec4da74bdd64a2a#npm:4.0.2", {\
+        "packageLocation": "./.yarn/__virtual__/zod-validation-error-virtual-3bcb843ce0/2/.yarn/berry/cache/zod-validation-error-npm-4.0.2-1b963160c8-10c0.zip/node_modules/zod-validation-error/",\
+        "packageDependencies": [\
+          ["@types/zod", null],\
+          ["zod", "npm:4.3.6"],\
+          ["zod-validation-error", "virtual:d4501b2235838ed7f300dd2d7c4a43ae42f6e7942e7c8441b6aac096eccc2701c101ec959352d9c09692ee12c32bd400cd93c9b7ec3067f05ec4da74bdd64a2a#npm:4.0.2"]\
+        ],\
+        "packagePeers": [\
+          "@types/zod",\
+          "zod"\
         ],\
         "linkType": "HARD"\
       }]\
@@ -16889,7 +16969,7 @@ function arg(
 		}
 
 		if (wholeArg.length > 1 && wholeArg[0] === '-') {
-			/* eslint-disable operator-linebreak */
+			 
 			const separatedArguments =
 				wholeArg[1] === '-' || wholeArg.length === 2
 					? [wholeArg]
@@ -16897,7 +16977,7 @@ function arg(
 							.slice(1)
 							.split('')
 							.map((a) => `-${a}`);
-			/* eslint-enable operator-linebreak */
+			 
 
 			for (let j = 0; j < separatedArguments.length; j++) {
 				const arg = separatedArguments[j];
@@ -16940,7 +17020,7 @@ function arg(
 							!(
 								argv[i + 1].match(/^-?\d*(\.(?=\d))?\d*$/) &&
 								(type === Number ||
-									// eslint-disable-next-line no-undef
+									 
 									(typeof BigInt !== 'undefined' && type === BigInt))
 							))
 					) {

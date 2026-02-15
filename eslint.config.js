@@ -1,30 +1,52 @@
-import config from 'eslint-config-xo'
-import eslintPluginUnicorn from 'eslint-plugin-unicorn'
-import react from 'eslint-plugin-react'
-import stylistic from '@stylistic/eslint-plugin'
-import { defineConfig } from 'eslint/config'
-import pluginRouter from '@tanstack/eslint-plugin-router'
-import globals from 'globals'
-import tseslint from 'typescript-eslint'
+
+import config from 'eslint-config-xo';
+import eslintPluginUnicorn from 'eslint-plugin-unicorn';
+import react from 'eslint-plugin-react';
+import stylistic from '@stylistic/eslint-plugin';
+import { defineConfig } from 'eslint/config';
+import pluginRouter from '@tanstack/eslint-plugin-router';
+import globals from 'globals';
+import tseslint from 'typescript-eslint';
+import reactHooks from 'eslint-plugin-react-hooks';
 
 export default defineConfig([
   {
-    files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx', 'eslint.config.js'],
-    extends: [config,
+    ignores: [
+      '**/node_modules/**',
+      '**/.yarn/**',
+      '**/dist/**',
+      '**/build/**',
+      '**/.git/**',
+    ],
+  },
+  {
+    files: ['client/src/**/*.{ts,tsx}', 'server/**/*.ts'],
+    extends: [
+      config,
       eslintPluginUnicorn.configs.recommended,
       stylistic.configs.recommended,
       react.configs.flat.recommended,
       pluginRouter.configs['flat/recommended'],
-        tseslint.configs.strictTypeChecked,
-  tseslint.configs.stylisticTypeChecked,
-
-],
-
+      tseslint.configs.strictTypeChecked,
+      tseslint.configs.stylisticTypeChecked,
+      reactHooks.configs.flat['recommended-latest'],
+    ],
     rules: {
-      '@stylistic/max-len': ['error', {
-        code: 100, ignoreComments: true, ignoreStrings: true, ignoreTemplateLiterals: true,
-      }],
+      '@stylistic/max-len': [
+        'error',
+        {
+          code: 100,
+          ignoreComments: true,
+          ignoreStrings: true,
+          ignoreTemplateLiterals: true,
+        },
+      ],
       'func-name-matching': ['off'],
+    },
+    settings: {
+      react: {
+        version: '19.2',
+      },
     },
     languageOptions: {
       parserOptions: {
@@ -38,4 +60,4 @@ export default defineConfig([
       },
     },
   },
-])
+]);
