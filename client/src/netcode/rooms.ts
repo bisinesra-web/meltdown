@@ -81,3 +81,15 @@ export const useGetRoom = () => useMutation({
     return RoomSchema.parse(data)
   },
 })
+
+export const useDeleteRoom = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    async mutationFn(code: string) {
+      await fetchWithAuth(`/rooms/delete/${code}`, 'DELETE')
+    },
+    async onSuccess() {
+      await queryClient.invalidateQueries({ queryKey: ['rooms'] })
+    },
+  })
+}

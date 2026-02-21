@@ -119,6 +119,20 @@ body {
   cursor: not-allowed;
 }
 
+.delete-btn {
+  background: transparent;
+  border: 1px solid var(--admin-primary);
+  color: var(--admin-primary);
+}
+.delete-btn:hover:not(:disabled) {
+  background: var(--admin-primary);
+  color: var(--admin-bg);
+}
+.delete-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .response-area {
   background: #000;
   border: 1px solid var(--admin-border);

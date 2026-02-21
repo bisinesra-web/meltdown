@@ -4,6 +4,7 @@ import cors from 'cors'
 import { Server } from 'socket.io'
 import { initializeDatabase } from './database.js'
 import roomsRouter, { getRoomByCode } from './routes/rooms.js'
+import { logger } from './logger.js'
 
 // Extend Socket type to include custom properties
 declare module 'socket.io' {
@@ -13,6 +14,7 @@ declare module 'socket.io' {
 }
 
 await initializeDatabase()
+logger.info('Database initialized')
 
 const app = express()
 const httpServer = http.createServer(app)
@@ -33,6 +35,7 @@ io.use((socket, next) => {
   const roomCodeValue = auth.room_code
 
   if (typeof roomCodeValue !== 'string') {
+    logger.warn('Invalid room code provided', { socketId: socket.id })
     next(new Error('Invalid room code'))
     return
   }
@@ -40,6 +43,7 @@ io.use((socket, next) => {
   const authenticateSocket = async (): Promise<boolean> => {
     const room = await getRoomByCode(roomCodeValue)
     if (!room) {
+      logger.warn('Room not found', { roomCode: roomCodeValue })
       return false
     }
 
@@ -50,19 +54,21 @@ io.use((socket, next) => {
   authenticateSocket()
     .then((isValid) => {
       if (!isValid) {
+        logger.warn('Socket authentication failed', { socketId: socket.id })
         next(new Error('Invalid room code'))
         return
       }
 
+      logger.info('Socket authenticated', { socketId: socket.id, roomId: socket.roomId })
       next()
     })
     .catch((error: unknown) => {
-      console.error('Socket auth error:', error)
+      logger.error('Socket auth error', { socketId: socket.id, error })
       next(new Error('Invalid room code'))
     })
 })
 
 const port = Number(process.env.PORT ?? 3000)
 httpServer.listen(port, () => {
-  console.log(`Server running on port ${String(port)}`)
+  logger.info(`Server running on port ${port}`)
 })

@@ -1,8 +1,8 @@
 import * as React from 'react'
 import { useAdminStore } from '../stores/admin-store'
-import { useListRooms, useCreateRoom, useGetRoom } from '../netcode/rooms'
+import { useListRooms, useCreateRoom, useGetRoom, useDeleteRoom } from '../netcode/rooms'
 import { Input } from '@base-ui/react'
-import './Admin.css'
+import './admin.css'
 
 export default function AdminPage() {
   const { token, setToken } = useAdminStore()
@@ -30,7 +30,12 @@ export default function AdminPage() {
     isPending: isGetPending,
     data: fetchedRoom,
     error: getError,
+    reset: resetGetRoom,
   } = useGetRoom()
+
+  const {
+    mutate: deleteRoom,
+  } = useDeleteRoom()
 
   const handleCreateRoom = () => {
     createRoom({ player1: player1Name, player2: player2Name })
@@ -40,6 +45,13 @@ export default function AdminPage() {
     if (roomCodeToFetch) {
       getRoom(roomCodeToFetch)
     }
+  }
+  const handleDeleteRoom = (code: string) => {
+    if (code) {
+      deleteRoom(code)
+    }
+    setRoomCodeToFetch('')
+    resetGetRoom()
   }
 
   const showRoomDetails = (roomId: number) => {
@@ -206,6 +218,7 @@ export default function AdminPage() {
           </div>
 
           {(fetchedRoom ?? getError) && (
+            <>
             <div className={`response-area ${getError ? 'status-error' : 'status-success'}`}>
               {getError
                 ? (
@@ -215,6 +228,20 @@ export default function AdminPage() {
                     JSON.stringify(fetchedRoom, undefined, 2)
                   )}
             </div>
+            {!getError && (
+              <button
+                className='admin-btn delete-btn'
+                onClick={() => {
+                  if (fetchedRoom) {
+                    handleDeleteRoom(fetchedRoom.room_code)
+                  }
+                }}
+                disabled={!token}
+              >
+                Delete Room
+              </button>
+            )}
+            </>
           )}
         </div>
 
