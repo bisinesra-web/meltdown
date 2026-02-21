@@ -15,6 +15,7 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js'
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js'
 import { gsap } from 'gsap'
 import '@fontsource-variable/jetbrains-mono'
+import Squares from '../components/scrolling-bg'
 import './Landing.css'
 
 type ScrambleTextFunction = (
@@ -282,7 +283,14 @@ export default function Landing() {
 
   return (
     <div ref={containerReference} className='main-container landing-page-body'>
-      <div className='grid-background' />
+      <Squares
+        speed={0.25}
+        squareSize={40}
+        direction='up'
+        borderColor='#4848483a'
+        bgColor='rgba(32, 32, 32, 0.31)'
+        hoverFillColor='#222222'
+      />
       <div className='vignette' />
       <div ref={mountReference} className='canvas-section'></div>
       <section className='title-section'>

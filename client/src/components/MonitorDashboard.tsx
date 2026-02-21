@@ -1,5 +1,3 @@
-import React from 'react'
-
 const MonitorDashboard = () => (
   <div className='monitor-dashboard'>
     <h1>Reactor Monitor Dashboard</h1>

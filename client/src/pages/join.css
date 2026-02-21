@@ -1,56 +1,28 @@
-:root {
+.join-container {
   --industrial-red: #723435;
   --primary-green: #C2D685;
   --background-black: #0a0a0a;
-}
-
-.join-container {
   width: 100vw;
   height: 100vh;
-  position: relative;
+  position: absolute;
   overflow: hidden;
-  background-color: #0a0a0a;
+  background-color: transparent;
 }
-
-/* Animated scrolling grid background */
-.grid-background-animated {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 200vh;
-  background-color: #0a0a0a;
-  background-image: linear-gradient(rgba(60, 60, 60, 0.4) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(60, 60, 60, 0.4) 1px, transparent 1px);
-  background-size: 40px 40px;
-  background-position: 0 0;
-  z-index: 0;
-  animation: scroll-grid 20s linear infinite;
-}
-
-@keyframes scroll-grid {
-  0% {
-    transform: translateY(0);
-  }
-  100% {
-    transform: translateY(40px);
-  }
-}
-
-.vignette {
+.join-container .vignette {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
   pointer-events: none;
-  z-index: 1;
+  z-index: 3;
   background: radial-gradient(
     ellipse at center,
     transparent 0%,
-    transparent 40%,
-    rgba(0, 0, 0, 0.3) 70%,
-    rgba(0, 0, 0, 0.7) 100%
+    transparent 30%,
+    rgba(0, 0, 0, 0.5) 50%,
+    rgba(0, 0, 0, 0.9) 100%
+    
   );
 }
 
@@ -58,7 +30,7 @@
   position: fixed;
   top: 2rem;
   left: 2rem;
-  z-index: 2;
+  z-index: 5;
 }
 
 .join-title {

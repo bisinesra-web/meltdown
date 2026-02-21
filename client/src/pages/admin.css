@@ -1,14 +1,14 @@
-:root {
+.admin-page {
   --admin-bg: #0a0a0a;
   --admin-primary: #723435;
   --admin-accent: #C2D685;
   --admin-text: #e0e0e0;
   --admin-border: #333;
-}
 
-body {
   background-color: var(--admin-bg);
   color: var(--admin-text);
+  min-height: 100vh;
+  width: 100%;
 }
 
 .admin-container {

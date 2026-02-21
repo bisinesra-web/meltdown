@@ -1,4 +1,9 @@
 .team-setup {
+  --primary-green: #00ff00;
+  --dark-green: #00aa00;
+  --background-black: #000000;
+  --panel-black: #0a0a0a;
+
   min-height: 100vh;
   padding: 2rem;
   background-color: var(--background-black);
@@ -135,6 +140,34 @@
   font-weight: bold;
   text-align: center;
   letter-spacing: 2px;
+  color: var(--primary-green);
+}
+
+.team-setup .btn {
+  background-color: transparent;
+  border: 2px solid var(--primary-green);
+  color: var(--primary-green);
+  padding: 12px 24px;
+  font-family: "Courier New", monospace;
+  font-size: 1rem;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+}
+
+.team-setup .btn:hover {
+  background-color: var(--primary-green);
+  color: var(--background-black);
+  box-shadow: 0 0 20px rgba(0, 255, 0, 0.6);
+}
+
+.team-setup .btn:active {
+  transform: scale(0.98);
+}
+
+.team-setup .btn-primary {
+  border-color: var(--primary-green);
   color: var(--primary-green);
 }
 

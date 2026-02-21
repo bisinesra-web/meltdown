@@ -1,5 +1,3 @@
-import React from 'react'
-
 const SabotageWarRoom = () => (
   <div className='sabotage-warroom'>
     <h2>Sabotage War Room</h2>

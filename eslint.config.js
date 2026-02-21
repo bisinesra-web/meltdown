@@ -42,6 +42,8 @@ export default defineConfig([
         },
       ],
       'func-name-matching': ['off'],
+      'react/react-in-jsx-scope': 0,
+      'react/jsx-uses-react': 0
     },
     settings: {
       react: {

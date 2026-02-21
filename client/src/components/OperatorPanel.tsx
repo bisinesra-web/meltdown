@@ -1,5 +1,3 @@
-import React from 'react'
-
 const OperatorPanel = () => (
   <div className='operator-panel'>
     <h2>Operator Controls</h2>

@@ -1,24 +1,22 @@
-* {
+.landing-page-body *,
+.landing-page-body *::before,
+.landing-page-body *::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-:root {
+.landing-page-body {
   --primary-green: #00ff00;
   --dark-green: #00aa00;
   --background-black: #000000;
   --panel-black: #0a0a0a;
-  --text-green: #00ff00;
   --border-color: #00ff00;
   --grid-color: rgba(0, 255, 0, 0.1);
   --industrial-red: #723435;
-}
 
-.landing-page-body {
   font-family: "Courier New", monospace;
   background-color: #0a0a0a;
-  color: var(--text-green);
   line-height: 1.6;
   overflow-x: hidden;
   overflow-y: auto;
@@ -32,23 +30,8 @@
   position: relative;
 }
 
-.grid-background {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: #0a0a0a;
-  background-image:
-    linear-gradient(rgba(60, 60, 60, 0.4) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(60, 60, 60, 0.4) 1px, transparent 1px);
-  background-size: 40px 40px;
-  background-position: center center;
-  z-index: 0;
-}
-
 /* Page-wide vignette overlay */
-.vignette {
+.landing-page-body .vignette {
   position: fixed;
   top: 0;
   left: 0;
@@ -66,8 +49,8 @@
 }
 
 .canvas-section {
-  width: 90vw;
-  height: 90vh;
+  width: 100vw;
+  height: 100vh;
   position: relative;
   z-index: 1;
   margin: 0 auto;
@@ -101,21 +84,20 @@
     0 0 40px rgba(114, 52, 53, 0.5),
     0 0 60px rgba(114, 52, 53, 0.3);
   margin: 0;
+  margin-top: -15vh;
 }
 
 /* #root styles removed to prevent global side effects */
 /* .main-container handles the layout height */
 
 /* Text Styles */
-h1 {
-  font-size: 3rem;
+.landing-page-body h1 {
   font-weight: bold;
   letter-spacing: 2px;
-  text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
   margin-bottom: 1rem;
 }
 
-h2 {
+.landing-page-body h2 {
   font-size: 2rem;
   font-weight: bold;
   letter-spacing: 1px;
@@ -124,7 +106,7 @@ h2 {
   padding-bottom: 0.5rem;
 }
 
-h3 {
+.landing-page-body h3 {
   font-size: 1.5rem;
   letter-spacing: 1px;
   margin-top: 1.5rem;
@@ -132,14 +114,14 @@ h3 {
   color: var(--dark-green);
 }
 
-p {
+.landing-page-body p {
   font-size: 1rem;
   margin-bottom: 0.8rem;
   line-height: 1.8;
 }
 
 /* Buttons */
-.btn {
+.landing-page-body .btn {
   background-color: transparent;
   border: 2px solid var(--primary-green);
   color: var(--text-green);
@@ -152,71 +134,71 @@ p {
   text-transform: uppercase;
 }
 
-.btn:hover {
+.landing-page-body .btn:hover {
   background-color: var(--primary-green);
   color: var(--background-black);
   box-shadow: 0 0 20px rgba(0, 255, 0, 0.6);
 }
 
-.btn:active {
+.landing-page-body .btn:active {
   transform: scale(0.98);
 }
 
-.btn-primary {
+.landing-page-body .btn-primary {
   border-color: var(--primary-green);
   color: var(--primary-green);
 }
 
-.btn-secondary {
+.landing-page-body .btn-secondary {
   border-color: var(--dark-green);
   color: var(--dark-green);
 }
 
-.btn-secondary:hover {
+.landing-page-body .btn-secondary:hover {
   background-color: var(--dark-green);
   color: var(--background-black);
   box-shadow: 0 0 20px rgba(0, 170, 0, 0.6);
 }
 
 /* Panel */
-.panel {
+.landing-page-body .panel {
   background-color: var(--panel-black);
   border: 2px solid var(--primary-green);
   padding: 2rem;
   margin: 1rem;
 }
 
-.panel-header {
+.landing-page-body .panel-header {
   border-bottom: 2px solid var(--primary-green);
   padding-bottom: 1rem;
   margin-bottom: 1.5rem;
 }
 
 /* Grid Layout */
-.grid {
+.landing-page-body .grid {
   display: grid;
   gap: 1.5rem;
 }
 
-.grid-2 {
+.landing-page-body .grid-2 {
   grid-template-columns: repeat(2, 1fr);
 }
 
-.grid-3 {
+.landing-page-body .grid-3 {
   grid-template-columns: repeat(3, 1fr);
 }
 
 @media (max-width: 768px) {
-  .grid-2,
-  .grid-3 {
+  .landing-page-body .grid-2,
+  .landing-page-body .grid-3 {
     grid-template-columns: 1fr;
   }
 
-  h1 {
+  .landing-page-body h1 {
     font-size: 2rem;
   }
 
-  h2 {
+  .landing-page-body h2 {
     font-size: 1.5rem;
   }
 }
@@ -252,16 +234,16 @@ p {
   }
 }
 
-.pulse {
+.landing-page-body .pulse {
   animation: pulse-glow 2s infinite;
 }
 
-.blink {
+.landing-page-body .blink {
   animation: blink 1s infinite;
 }
 
 /* Status Indicators */
-.status {
+.landing-page-body .status {
   display: inline-block;
   width: 12px;
   height: 12px;
@@ -269,11 +251,11 @@ p {
   margin-right: 0.5rem;
 }
 
-.status.active {
+.landing-page-body .status.active {
   background-color: var(--primary-green);
   box-shadow: 0 0 10px var(--primary-green);
 }
 
-.status.inactive {
+.landing-page-body .status.inactive {
   background-color: transparent;
 }

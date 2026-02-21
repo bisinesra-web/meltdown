@@ -1,5 +1,3 @@
-import React from 'react'
-
 const MessageFeed = () => (
   <div className='message-feed'>
     <h3>Messages</h3>
