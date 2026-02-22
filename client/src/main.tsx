@@ -13,6 +13,7 @@ import Join from './pages/join'
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import AdminPage from './pages/admin'
+import TeamSetup from './pages/team-setup'
 
 const queryClient = new QueryClient()
 
@@ -53,11 +54,18 @@ const adminRoute = createRoute({
   component: AdminPage,
 })
 
+const teamChooseRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/team-setup',
+  component: TeamSetup,
+})
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   aboutRoute,
   joinRoute,
   adminRoute,
+  teamChooseRoute,
 ])
 
 const router = createRouter({

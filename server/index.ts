@@ -4,6 +4,7 @@ import cors from 'cors'
 import { Server } from 'socket.io'
 import { initializeDatabase } from './database.js'
 import roomsRouter, { getRoomByCode } from './routes/rooms.js'
+import gameRouter from './routes/game.js'
 import { logger } from './logger.js'
 
 // Extend Socket type to include custom properties
@@ -29,6 +30,7 @@ app.use(cors({ origin: 'http://localhost:5173' }))
 app.use(express.json())
 
 app.use('/rooms', roomsRouter)
+app.use('/game', gameRouter)
 
 io.use((socket, next) => {
   const auth = socket.handshake.auth as Record<string, unknown>
@@ -70,5 +72,5 @@ io.use((socket, next) => {
 
 const port = Number(process.env.PORT ?? 3000)
 httpServer.listen(port, () => {
-  logger.info(`Server running on port ${port}`)
+  logger.info(`Server running on port ${port.toString()}`)
 })

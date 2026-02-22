@@ -1,0 +1,232 @@
+/* ── Scoped reset — affects only .team-setup-page and its children ── */
+.team-setup-page,
+.team-setup-page *,
+.team-setup-page *::before,
+.team-setup-page *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── Design tokens ── */
+.team-setup-page {
+  --ts-red: #723435;
+  --ts-green: #C2D685;
+  --ts-green-dim: rgba(194, 214, 133, 0.45);
+  --ts-green-glow: rgba(194, 214, 133, 0.15);
+  --ts-black: #0a0a0a;
+  --ts-card-bg: rgba(10, 10, 10, 0.85);
+  --ts-border: rgba(194, 214, 133, 0.3);
+  --ts-corner: #C2D685;
+  --ts-font: "JetBrains Mono Variable", "Courier New", monospace;
+
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background-color: transparent;
+  z-index: 1;
+}
+
+/* ── Entry overlay — starts opaque black, fades out on mount ── */
+.team-setup-page__entry-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  background: #000;
+  pointer-events: none;
+  animation: ts-overlay-out 0.35s ease-out 0.05s both;
+}
+
+@keyframes ts-overlay-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+/* ── Vignette overlay ── */
+.team-setup-page__vignette {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 0%,
+    transparent 30%,
+    rgba(0, 0, 0, 0.5) 55%,
+    rgba(0, 0, 0, 0.92) 100%
+  );
+}
+
+/* ── Header ── */
+.team-setup-page__header {
+  position: fixed;
+  top: 2rem;
+  left: 2rem;
+  z-index: 5;
+  animation: ts-header-enter 0.4s ease-out 0.28s both;
+}
+
+.team-setup-page__title {
+  font-family: var(--ts-font);
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 900;
+  color: var(--ts-red);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  text-shadow:
+    0 0 20px rgba(114, 52, 53, 0.8),
+    0 0 40px rgba(114, 52, 53, 0.5),
+    0 0 60px rgba(114, 52, 53, 0.3);
+}
+
+/* ── Main layout ── */
+.team-setup-page__main {
+  position: relative;
+  z-index: 4;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* ── Card ── */
+.team-setup-page__card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  padding: 3rem 3.5rem;
+  background: var(--ts-card-bg);
+  border: 1px solid var(--ts-border);
+  backdrop-filter: blur(4px);
+  min-width: clamp(300px, 50vw, 560px);
+  animation: ts-card-enter 0.5s cubic-bezier(0.2, 0.8, 0.3, 1) 0.38s both;
+}
+
+@keyframes ts-header-enter {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes ts-card-enter {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Corner decorations ── */
+.team-setup-page__card-corner {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-color: var(--ts-corner);
+  border-style: solid;
+}
+.team-setup-page__card-corner--tl { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+.team-setup-page__card-corner--tr { top: -1px; right: -1px; border-width: 2px 2px 0 0; }
+.team-setup-page__card-corner--bl { bottom: -1px; left: -1px; border-width: 0 0 2px 2px; }
+.team-setup-page__card-corner--br { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+
+/* ── Room badge ── */
+.team-setup-page__room-badge {
+  font-family: var(--ts-font);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: rgba(194, 214, 133, 0.5);
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+}
+
+.team-setup-page__room-badge span {
+  color: var(--ts-green);
+  text-shadow: 0 0 8px var(--ts-green-dim);
+}
+
+/* ── Prompt ── */
+.team-setup-page__prompt {
+  font-family: var(--ts-font);
+  font-size: clamp(1.1rem, 3vw, 1.5rem);
+  font-weight: 700;
+  color: var(--ts-green);
+  text-transform: uppercase;
+  letter-spacing: 0.25em;
+  text-align: center;
+  text-shadow:
+    0 0 16px rgba(194, 214, 133, 0.7),
+    0 0 32px rgba(194, 214, 133, 0.4);
+}
+
+/* ── Radio selector wrapper ── */
+.team-setup-page__selector {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+/* ── Error message ── */
+.team-setup-page__error {
+  font-family: var(--ts-font);
+  font-size: clamp(0.75rem, 2vw, 0.9rem);
+  font-weight: 700;
+  color: var(--ts-red);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  text-align: center;
+  text-shadow:
+    0 0 10px rgba(114, 52, 53, 0.9),
+    0 0 22px rgba(114, 52, 53, 0.5);
+  animation: ts-error-flicker 0.4s steps(1) 2;
+}
+
+@keyframes ts-error-flicker {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.15; }
+}
+
+/* ── Confirm button ── */
+.team-setup-page__confirm-btn {
+  font-family: var(--ts-font);
+  font-size: clamp(1rem, 2.5vw, 1.3rem);
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  padding: 0.9rem 3.5rem;
+  background-color: transparent;
+  border: 2px solid var(--ts-green);
+  color: var(--ts-green);
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.team-setup-page__confirm-btn:hover:not(:disabled) {
+  background-color: var(--ts-green);
+  color: var(--ts-black);
+  box-shadow: 0 0 28px rgba(194, 214, 133, 0.6), 0 0 8px rgba(194, 214, 133, 0.3) inset;
+}
+
+.team-setup-page__confirm-btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.team-setup-page__confirm-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  border-color: rgba(194, 214, 133, 0.3);
+  color: rgba(194, 214, 133, 0.3);
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .team-setup-page__header {
+    top: 1rem;
+    left: 1rem;
+  }
+
+  .team-setup-page__card {
+    padding: 2rem 1.5rem;
+    min-width: calc(100vw - 3rem);
+  }
+}

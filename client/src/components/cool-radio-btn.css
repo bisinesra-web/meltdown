@@ -1,0 +1,311 @@
+/* ─────────────────────────────────────────────────────────────────
+   COOL RADIO BUTTON — Cyberpunk / HUD bracket toggle
+   ───────────────────────────────────────────────────────────────── */
+
+/* Color theme maps — injected as --crb-neon via inline style */
+.crb-group {
+  --crb-neon: #00f5ff;           /* fallback: cyan */
+  --crb-neon-dim: rgba(0, 245, 255, 0.18);
+  --crb-neon-glow: rgba(0, 245, 255, 0.45);
+  --crb-neon-outer: rgba(0, 245, 255, 0.12);
+  --crb-neon-halo: rgba(0, 245, 255, 0.08);
+  --crb-size: 22px;
+  --crb-corner: 7px;             /* length of each bracket arm */
+  --crb-thick: 1.5px;            /* bracket line thickness */
+  --crb-inner-ratio: 0.42;       /* inner square as fraction of outer */
+  --crb-inner-size: calc(var(--crb-size) * var(--crb-inner-ratio));
+  --crb-gap: 10px;               /* gap between box and label */
+  --crb-label-size: 0.82rem;
+
+  display: flex;
+  gap: 0;
+  user-select: none;
+}
+
+.crb-group--horizontal { flex-direction: row; flex-wrap: wrap; gap: 20px; }
+.crb-group--vertical   { flex-direction: column; gap: 1rem; }
+
+/* ── Per-theme color overrides ─────────────────────────────────── */
+.crb-group[data-theme="cyan"] {
+  --crb-neon:       #00f5ff;
+  --crb-neon-dim:   rgba(0, 245, 255, 0.18);
+  --crb-neon-glow:  rgba(0, 245, 255, 0.50);
+  --crb-neon-outer: rgba(0, 245, 255, 0.14);
+  --crb-neon-halo:  rgba(0, 245, 255, 0.07);
+}
+.crb-group[data-theme="magenta"] {
+  --crb-neon:       #ff00e5;
+  --crb-neon-dim:   rgba(255, 0, 229, 0.18);
+  --crb-neon-glow:  rgba(255, 0, 229, 0.50);
+  --crb-neon-outer: rgba(255, 0, 229, 0.14);
+  --crb-neon-halo:  rgba(255, 0, 229, 0.07);
+}
+.crb-group[data-theme="green"] {
+  --crb-neon:       #39ff14;
+  --crb-neon-dim:   rgba(57, 255, 20, 0.18);
+  --crb-neon-glow:  rgba(57, 255, 20, 0.50);
+  --crb-neon-outer: rgba(57, 255, 20, 0.14);
+  --crb-neon-halo:  rgba(57, 255, 20, 0.07);
+}
+.crb-group[data-theme="red"] {
+  --crb-neon:       #ff2222;
+  --crb-neon-dim:   rgba(255, 34, 34, 0.18);
+  --crb-neon-glow:  rgba(255, 34, 34, 0.50);
+  --crb-neon-outer: rgba(255, 34, 34, 0.14);
+  --crb-neon-halo:  rgba(255, 34, 34, 0.07);
+}
+
+/* ── Size presets ──────────────────────────────────────────────── */
+.crb-group[data-size="sm"] { --crb-size: 16px; --crb-corner: 5px;  --crb-label-size: 0.75rem; }
+.crb-group[data-size="md"] { --crb-size: 22px; --crb-corner: 7px;  --crb-label-size: 0.82rem; }
+.crb-group[data-size="lg"] { --crb-size: 30px; --crb-corner: 10px; --crb-label-size: 0.95rem; }
+
+/* ── Glow intensity multipliers ────────────────────────────────── */
+.crb-group[data-glow="low"]    { --crb-glow-mult: 0.5; }
+.crb-group[data-glow="medium"] { --crb-glow-mult: 1;   }
+.crb-group[data-glow="high"]   { --crb-glow-mult: 1.8; }
+
+/* ─────────────────────────────────────────────────────────────────
+   OPTION ROW
+   ───────────────────────────────────────────────────────────────── */
+.crb-option {
+  display: flex;
+  align-items: center;
+  gap: var(--crb-gap);
+  cursor: pointer;
+  outline: none;
+}
+
+.crb-option--disabled {
+  cursor: not-allowed;
+  opacity: 0.38;
+  pointer-events: none;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   BRACKET FRAME
+   Uses 8 background-gradient segments to paint only the corners,
+   giving the ⟦ ⟧ "HUD bracket" look without extra DOM nodes.
+   ───────────────────────────────────────────────────────────────── */
+.crb-frame {
+  position: relative;
+  flex-shrink: 0;
+  width:  var(--crb-size);
+  height: var(--crb-size);
+
+  /* 4 corner brackets — 8 gradient strips */
+  background:
+    /* top-left — horizontal */
+    linear-gradient(var(--crb-neon), var(--crb-neon))
+      top    left  / var(--crb-corner) var(--crb-thick) no-repeat,
+    /* top-left — vertical */
+    linear-gradient(var(--crb-neon), var(--crb-neon))
+      top    left  / var(--crb-thick) var(--crb-corner) no-repeat,
+    /* top-right — horizontal */
+    linear-gradient(var(--crb-neon), var(--crb-neon))
+      top    right / var(--crb-corner) var(--crb-thick) no-repeat,
+    /* top-right — vertical */
+    linear-gradient(var(--crb-neon), var(--crb-neon))
+      top    right / var(--crb-thick) var(--crb-corner) no-repeat,
+    /* bottom-left — horizontal */
+    linear-gradient(var(--crb-neon), var(--crb-neon))
+      bottom left  / var(--crb-corner) var(--crb-thick) no-repeat,
+    /* bottom-left — vertical */
+    linear-gradient(var(--crb-neon), var(--crb-neon))
+      bottom left  / var(--crb-thick) var(--crb-corner) no-repeat,
+    /* bottom-right — horizontal */
+    linear-gradient(var(--crb-neon), var(--crb-neon))
+      bottom right / var(--crb-corner) var(--crb-thick) no-repeat,
+    /* bottom-right — vertical */
+    linear-gradient(var(--crb-neon), var(--crb-neon))
+      bottom right / var(--crb-thick) var(--crb-corner) no-repeat;
+
+  /* idle very-subtle glow */
+  filter: drop-shadow(0 0 1.5px var(--crb-neon-dim));
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  transition:
+    filter 180ms ease,
+    background 120ms ease;
+}
+
+/* ── Hover state ───────────────────────────────────────────────── */
+.crb-option:hover:not(.crb-option--disabled) .crb-frame,
+.crb-option:focus-visible .crb-frame {
+  filter:
+    drop-shadow(0 0 3px var(--crb-neon-glow))
+    drop-shadow(0 0 7px var(--crb-neon-outer));
+}
+
+/* ── Checked / ON state ─────────────────────────────────────────── */
+.crb-option--checked .crb-frame {
+  filter:
+    drop-shadow(0 0 4px var(--crb-neon-glow))
+    drop-shadow(0 0 10px var(--crb-neon-outer))
+    drop-shadow(0 0 20px var(--crb-neon-halo));
+}
+
+/* ── Idle pulse on checked ──────────────────────────────────────── */
+.crb-option--checked.crb-option--pulse .crb-frame {
+  animation: crb-idle-pulse 12.8s ease-in-out infinite;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   INNER SQUARE (the active indicator)
+   ───────────────────────────────────────────────────────────────── */
+.crb-inner {
+  width:  var(--crb-inner-size);
+  height: var(--crb-inner-size);
+  background: var(--crb-neon);
+  border-radius: 1px;
+
+  /* OFF state */
+  transform: scale(0);
+  opacity: 0;
+
+  box-shadow:
+    0 0 4px  var(--crb-neon-glow),
+    0 0 10px var(--crb-neon-outer),
+    0 0 18px var(--crb-neon-halo);
+
+  transition:
+    transform 150ms ease-out,
+    opacity   150ms ease-out;
+
+  will-change: transform, opacity;
+}
+
+/* ON state */
+.crb-option--checked .crb-inner {
+  transform: scale(1);
+  opacity: 1;
+}
+
+/* LED flicker — applied for ~200ms on activation.
+   transition: none is CRITICAL — suppresses the opacity/transform
+   transition so the animation has sole ownership of those props.     */
+.crb-option--flicker .crb-inner {
+  transition: none;
+  animation: crb-led-flicker 280ms step-start forwards;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   LABEL
+   ───────────────────────────────────────────────────────────────── */
+.crb-label {
+  font-family: 'Share Tech Mono', 'Courier New', monospace;
+  font-size: var(--crb-label-size);
+  letter-spacing: 0.06em;
+  color: var(--crb-neon);
+  opacity: 0.72;
+  text-transform: uppercase;
+  transition: opacity 150ms ease, text-shadow 180ms ease;
+}
+
+.crb-option:hover:not(.crb-option--disabled) .crb-label {
+  opacity: 0.95;
+  text-shadow: 0 0 6px var(--crb-neon-glow);
+}
+
+.crb-option--checked .crb-label {
+  opacity: 1;
+  text-shadow:
+    0 0 5px  var(--crb-neon-glow),
+    0 0 12px var(--crb-neon-outer);
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   ANIMATIONS
+   ───────────────────────────────────────────────────────────────── */
+
+/* LED flicker — cyberpunk activation effect.
+   Also animates transform so the square snaps in during the flicker
+   rather than relying on the (now-suppressed) CSS transition.         */
+@keyframes crb-led-flicker {
+   0%  { opacity: 0;    transform: scale(0.6); }
+   7%  { opacity: 1;    transform: scale(1.08); }
+  14%  { opacity: 0;    transform: scale(0.9); }
+  22%  { opacity: 1;    transform: scale(1); }
+  30%  { opacity: 0.3;  transform: scale(1); }
+  38%  { opacity: 1;    transform: scale(1); }
+  48%  { opacity: 0.55; transform: scale(1); }
+  57%  { opacity: 1;    transform: scale(1); }
+  68%  { opacity: 0.8;  transform: scale(1); }
+  78%  { opacity: 1;    transform: scale(1); }
+  90%  { opacity: 0.92; transform: scale(1); }
+ 100%  { opacity: 1;    transform: scale(1); }
+}
+
+/* Idle pulse — dramatic neon breathing (opt-in) */
+@keyframes crb-idle-pulse {
+   0%, 100% {
+    filter:
+      drop-shadow(0 0 2px var(--crb-neon-dim))
+      drop-shadow(0 0 4px var(--crb-neon-outer));
+    opacity: 0.7;
+  }
+  50% {
+    filter:
+      drop-shadow(0 0 8px var(--crb-neon-glow))
+      drop-shadow(0 0 20px var(--crb-neon-outer))
+      drop-shadow(0 0 40px var(--crb-neon-halo))
+      drop-shadow(0 0 60px var(--crb-neon-halo));
+    opacity: 1;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   SCANLINE / NOISE TEXTURE OVERLAY
+   Applied to the full option row via .crb-option--scanlines,
+   AND to the bracket frame for a closer CRT effect.
+   ───────────────────────────────────────────────────────────────── */
+
+/* Full-row scanline wash */
+.crb-option--scanlines {
+  position: relative;
+}
+
+.crb-option--scanlines::before {
+  content: '';
+  position: absolute;
+  inset: -4px -2px;
+  z-index: 1;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent         0px,
+    transparent         2px,
+    rgba(0, 0, 0, 0.38) 2px,
+    rgba(0, 0, 0, 0.38) 3px
+  );
+  /* faint phosphor green tint baked in */
+  mix-blend-mode: multiply;
+  border-radius: 1px;
+  animation: crb-scanline-drift 8s linear infinite;
+}
+
+/* The bracket frame also gets its own tighter scanline overlay */
+.crb-frame--scanlines::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0)    0px,
+    rgba(0, 0, 0, 0)    1px,
+    rgba(0, 0, 0, 0.55) 1px,
+    rgba(0, 0, 0, 0.55) 2px
+  );
+  border-radius: inherit;
+}
+
+/* Slow downward drift gives the CRT rolling-scan illusion */
+@keyframes crb-scanline-drift {
+  from { background-position: 0 0; }
+  to   { background-position: 0 60px; }
+}

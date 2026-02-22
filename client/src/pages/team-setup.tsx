@@ -1,142 +1,128 @@
-import React, { useState } from 'react'
-import './TeamSetup.css'
+import React, { useState, useEffect } from 'react'
+import '@fontsource-variable/jetbrains-mono'
+import { useNavigate } from '@tanstack/react-router'
+import Squares from '../components/scrolling-bg'
+import { CoolRadioButton } from '../components/cool-radio-button'
+import { useRoomStore } from '../stores/room-store'
+import { useJoinTeam } from '../netcode/joining'
+import './team-setup.css'
 
-type NavigateTarget = 'landing' | 'rules' | 'setup' | 'game'
+export default function TeamSetup() {
+  const [selectedTeam, setSelectedTeam] = useState('')
+  const navigate = useNavigate()
 
-interface GameConfig {
-  round: number
-  team1Name: string
-  team2Name: string
-  startingTeam: string
-  startingRole: 'STABILIZING' | 'SABOTAGING'
-}
+  const roomCode = useRoomStore(state => state.roomCode)
+  const player1Name = useRoomStore(state => state.player1Name)
+  const player2Name = useRoomStore(state => state.player2Name)
 
-interface TeamSetupProperties {
-  onNavigate: (target: NavigateTarget) => void
-  onConfigSet: (config: GameConfig) => void
-}
+  const joinTeam = useJoinTeam()
 
-const TeamSetup = ({ onNavigate, onConfigSet }: TeamSetupProperties) => {
-  const [team1Name, setTeam1Name] = useState('TEAM ALPHA')
-  const [team2Name, setTeam2Name] = useState('TEAM BRAVO')
-  const [round, setRound] = useState(1)
+  const hasRoomData = Boolean(roomCode && player1Name && player2Name)
 
-  const handleStart = () => {
-    const config: GameConfig = {
-      round,
-      team1Name,
-      team2Name,
-      startingTeam: round === 1 ? 'TEAM ALPHA' : 'TEAM BRAVO',
-      startingRole: 'STABILIZING',
+  // Guard: if no room data in store, redirect back to join
+  useEffect(() => {
+    if (!hasRoomData) {
+      navigate({ to: '/join' }).catch(console.error)
     }
-    onConfigSet(config)
-    onNavigate('game')
+  }, [hasRoomData, navigate])
+
+  if (!hasRoomData || !roomCode || !player1Name || !player2Name) {
+    return
   }
 
+  const teamOptions = [
+    { label: '\u00A0' + player1Name, value: player1Name },
+    { label: '\u00A0' + player2Name, value: player2Name },
+  ]
+
+  const handleConfirm = () => {
+    if (!selectedTeam || joinTeam.isPending) {
+      return
+    }
+
+    joinTeam.mutate(
+      { roomCode, teamName: selectedTeam },
+      {
+        onSuccess() {
+          // eslint-disable-next-line no-alert
+          globalThis.alert(`ACCESS GRANTED — Welcome, ${selectedTeam}`)
+          // Navigate to /play once that page exists
+        },
+      },
+    )
+  }
+
+  const errorMessage = joinTeam.isError
+    ? (joinTeam.error.message.toLowerCase().includes('already joined')
+        ? `SLOT OCCUPIED — ${selectedTeam} HAS ALREADY JOINED`
+        : joinTeam.error.message.toUpperCase())
+    : undefined
+
   return (
-    <div className='team-setup'>
-      <div className='setup-container'>
-        <button
-          className='btn-back'
-          onClick={() => {
-            onNavigate('landing')
-          }}
-        >
-          &lt; BACK
-        </button>
+    <>
+      <Squares
+        speed={0.15}
+        squareSize={40}
+        direction='diagonal'
+        borderColor='#3e3e3e53'
+        bgColor='rgba(55, 55, 55, 0.31)'
+      />
+      <div className='team-setup-page'>
+        <div className='team-setup-page__vignette' />
+        <div className='team-setup-page__entry-overlay' aria-hidden='true' />
 
-        <h1>GAME SETUP</h1>
+        <header className='team-setup-page__header'>
+          <h1 className='team-setup-page__title'>MELTDOWN</h1>
+        </header>
 
-        <div className='setup-grid'>
-          <section className='setup-panel'>
-            <h2>TEAM CONFIGURATION</h2>
-            <div className='input-group'>
-              <label>TEAM 1 NAME</label>
-              <input
-                type='text'
-                value={team1Name}
-                onChange={(e) => {
-                  setTeam1Name(e.target.value.toUpperCase())
+        <main className='team-setup-page__main'>
+          <div className='team-setup-page__card'>
+            <div className='team-setup-page__card-corner team-setup-page__card-corner--tl' />
+            <div className='team-setup-page__card-corner team-setup-page__card-corner--tr' />
+            <div className='team-setup-page__card-corner team-setup-page__card-corner--bl' />
+            <div className='team-setup-page__card-corner team-setup-page__card-corner--br' />
+
+            <p className='team-setup-page__room-badge'>
+              {'ROOM '}
+              <span>{roomCode}</span>
+            </p>
+
+            <h2 className='team-setup-page__prompt'>PLEASE SELECT YOUR TEAM</h2>
+
+            <div className='team-setup-page__selector'>
+              <CoolRadioButton
+                options={teamOptions}
+                value={selectedTeam}
+                onChange={(value) => {
+                  setSelectedTeam(value)
+                  if (joinTeam.isError) {
+                    joinTeam.reset()
+                  }
                 }}
-                maxLength={20}
+                customColor='#C2D685'
+                size={90}
+                fontSize={2}
+                glowIntensity='high'
+                idlePulse={true}
+                scanlines={true}
+                layout='vertical'
               />
             </div>
 
-            <div className='input-group'>
-              <label>TEAM 2 NAME</label>
-              <input
-                type='text'
-                value={team2Name}
-                onChange={(e) => {
-                  setTeam2Name(e.target.value.toUpperCase())
-                }}
-                maxLength={20}
-              />
-            </div>
+            {errorMessage && (
+              <p className='team-setup-page__error'>{errorMessage}</p>
+            )}
 
-            <div className='input-group'>
-              <label>STARTING ROUND</label>
-              <select
-                value={round}
-                onChange={(e) => {
-                  setRound(Number(e.target.value))
-                }}
-              >
-                <option value={1}>ROUND 1</option>
-                <option value={2}>ROUND 2</option>
-              </select>
-            </div>
-          </section>
-
-          <section className='setup-panel'>
-            <h2>ROUND 1 ROLES</h2>
-            <div className='role-assignment'>
-              <div className='role-box stabilizing'>
-                <h3>STABILIZING</h3>
-                <p className='team-name'>{team1Name}</p>
-                <p className='role-desc'>Isolated</p>
-                <p className='role-desc'>Cannot Communicate</p>
-                <p className='role-desc'>Keep Reactor Safe</p>
-              </div>
-
-              <div className='vs-text'>VS</div>
-
-              <div className='role-box sabotaging'>
-                <h3>SABOTAGING</h3>
-                <p className='team-name'>{team2Name}</p>
-                <p className='role-desc'>War Room</p>
-                <p className='role-desc'>Full Visibility</p>
-                <p className='role-desc'>Cause Chaos</p>
-              </div>
-            </div>
-          </section>
-
-          <section className='setup-panel'>
-            <h2>ROUND 2 PREVIEW</h2>
-            <div className='role-assignment'>
-              <div className='role-box sabotaging'>
-                <h3>SABOTAGING</h3>
-                <p className='team-name'>{team1Name}</p>
-              </div>
-
-              <div className='vs-text'>VS</div>
-
-              <div className='role-box stabilizing'>
-                <h3>STABILIZING</h3>
-                <p className='team-name'>{team2Name}</p>
-              </div>
-            </div>
-          </section>
-        </div>
-
-        <div className='action-buttons'>
-          <button className='btn btn-primary' onClick={handleStart}>
-            START GAME
-          </button>
-        </div>
+            <button
+              className='team-setup-page__confirm-btn'
+              onClick={handleConfirm}
+              disabled={!selectedTeam || joinTeam.isPending}
+            >
+              {joinTeam.isPending ? 'AUTHENTICATING...' : 'CONFIRM TEAM'}
+            </button>
+          </div>
+        </main>
       </div>
-    </div>
+    </>
   )
 }
-
-export default TeamSetup

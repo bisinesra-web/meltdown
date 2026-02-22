@@ -105,6 +105,62 @@
   transition: all 0.2s ease;
 }
 
+.join-error {
+  font-family: "JetBrains Mono Variable", monospace;
+  font-size: clamp(0.8rem, 2vw, 1rem);
+  font-weight: 700;
+  color: var(--industrial-red);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  text-shadow: 0 0 10px rgba(114, 52, 53, 0.9), 0 0 20px rgba(114, 52, 53, 0.5);
+  text-align: center;
+  animation: join-error-flicker 0.4s steps(1) 2;
+}
+
+@keyframes join-error-flicker {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
+}
+
+/* ── Exit transition ─────────────────────────────────────────── */
+.join-container--exiting .join-form {
+  animation: join-form-glitch-out 0.42s ease-in forwards;
+}
+
+.join-container--exiting .join-header {
+  animation: join-header-glitch-out 0.3s ease-in 0.05s forwards;
+}
+
+.join-blackout {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: #000;
+  pointer-events: none;
+  animation: join-blackout-in 0.55s ease-in forwards;
+}
+
+@keyframes join-form-glitch-out {
+  0%   { opacity: 1;   transform: none;                    filter: none; }
+  12%  { opacity: 0.3; transform: skewX(-2deg);            filter: brightness(2.5) saturate(0); }
+  25%  { opacity: 0.85; transform: none;                   filter: none; }
+  45%  { opacity: 0.2; transform: skewX(1.5deg) translateY(-3px); filter: brightness(1.8); }
+  65%  { opacity: 0.6; transform: none;                    filter: saturate(0); }
+  100% { opacity: 0;   transform: translateY(-6px) scale(0.99); filter: brightness(0); }
+}
+
+@keyframes join-header-glitch-out {
+  0%   { opacity: 1; transform: none; }
+  40%  { opacity: 0.4; transform: translateX(3px); }
+  100% { opacity: 0; transform: translateX(-6px); }
+}
+
+@keyframes join-blackout-in {
+  0%   { opacity: 0; }
+  40%  { opacity: 0.15; }
+  100% { opacity: 1; }
+}
+
 .join-submit-btn:disabled {
   opacity: 0.3;
   cursor: not-allowed;
