@@ -35,7 +35,7 @@ const authMiddleware = (
   next()
 }
 
-const generateCode = (length: number) => {
+export const generateCode = (length: number) => {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
   let result = ''
   for (let index = 0; index < length; index++) {
@@ -57,8 +57,6 @@ router.post('/create', authMiddleware, async (request, response) => {
 
     const roomCode = generateCode(5)
     // Generate 8-digit capital alphanumeric secrets
-    const p1Secret = generateCode(8)
-    const p2Secret = generateCode(8)
 
     await database.run(
       `INSERT INTO rooms (
@@ -67,12 +65,10 @@ router.post('/create', authMiddleware, async (request, response) => {
         player_2_name, 
         player_1_secret, 
         player_2_secret
-      ) VALUES (?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, NULL, NULL)`,
       roomCode,
       player1,
       player2,
-      p1Secret,
-      p2Secret,
     )
 
     const room = await database.get<RoomRow>(
@@ -152,7 +148,7 @@ router.delete('/delete/:code', authMiddleware, async (request, response) => {
       response.status(404).json({ error: 'Room not found' })
       return
     }
-  
+
     logger.info('Room deleted successfully', { roomCode })
     response.json({ message: 'Room deleted successfully' })
   }
