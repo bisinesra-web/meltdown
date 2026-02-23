@@ -1,0 +1,317 @@
+/* ── Scoped reset — affects only .waiting-room and its children ── */
+.waiting-room,
+.waiting-room *,
+.waiting-room *::before,
+.waiting-room *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── Design tokens ── */
+.waiting-room {
+  --wr-red: #723435;
+  --wr-green: #C2D685;
+  --wr-green-dim: rgba(194, 214, 133, 0.45);
+  --wr-green-glow: rgba(194, 214, 133, 0.15);
+  --wr-dark-green: #535C39;
+  --wr-black: #0a0a0a;
+  --wr-card-bg: rgba(10, 10, 10, 0.88);
+  --wr-border: rgba(194, 214, 133, 0.3);
+  --wr-font: "JetBrains Mono Variable", "Courier New", monospace;
+
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background-color: transparent;
+  z-index: 1;
+  font-family: var(--wr-font);
+}
+
+/* ── Entry overlay — fades out on mount ── */
+.waiting-room__entry-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: #000;
+  pointer-events: none;
+  animation: wr-overlay-out 0.4s ease-out 0.05s both;
+}
+
+@keyframes wr-overlay-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+/* ── Vignette ── */
+.waiting-room__vignette {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 0%,
+    transparent 30%,
+    rgba(0, 0, 0, 0.45) 55%,
+    rgba(0, 0, 0, 0.9) 100%
+  );
+}
+
+/* ── Header ── */
+.waiting-room__header {
+  position: fixed;
+  top: 2rem;
+  left: 2rem;
+  z-index: 15;
+  animation: wr-fade-in 0.4s ease-out 0.3s both;
+}
+
+.waiting-room__title {
+  font-family: var(--wr-font);
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 900;
+  color: var(--wr-red);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  text-shadow:
+    0 0 20px rgba(114, 52, 53, 0.8),
+    0 0 40px rgba(114, 52, 53, 0.5),
+    0 0 60px rgba(114, 52, 53, 0.3);
+}
+
+@keyframes wr-fade-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── 3D viewport ── */
+.waiting-room__viewport {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  pointer-events: auto;
+}
+
+.waiting-room__viewport canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  cursor: grab;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.waiting-room__viewport canvas:active {
+  cursor: grabbing;
+}
+
+/* ── Bottom status text ── */
+.waiting-room__status-bar {
+  position: fixed;
+  bottom: 3rem;
+  left: 0;
+  right: 0;
+  z-index: 15;
+  text-align: center;
+  animation: wr-fade-in 0.5s ease-out 0.5s both;
+}
+
+.waiting-room__status-text {
+  font-family: var(--wr-font);
+  font-size: clamp(1.2rem, 3vw, 2rem);
+  font-weight: 700;
+  color: var(--wr-green);
+  text-transform: uppercase;
+  letter-spacing: 0.25em;
+  text-shadow:
+    0 0 16px rgba(194, 214, 133, 0.7),
+    0 0 32px rgba(194, 214, 133, 0.4);
+}
+
+.waiting-room__cursor {
+  display: inline-block;
+  width: 0.6em;
+  height: 1.1em;
+  background: var(--wr-green);
+  vertical-align: text-bottom;
+  margin-left: 0.15em;
+  animation: wr-blink 1s steps(1) infinite;
+  box-shadow: 0 0 8px var(--wr-green-dim);
+}
+
+@keyframes wr-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+/* ── Diagnostic overlay (sector scan popup) ── */
+.waiting-room__diag-popup {
+  position: fixed;
+  bottom: 7rem;
+  right: 2rem;
+  z-index: 15;
+  background: var(--wr-card-bg);
+  border: 1px solid var(--wr-border);
+  padding: 0.6rem 1rem;
+  max-width: 380px;
+  animation: wr-diag-enter 0.2s ease-out both;
+}
+
+@keyframes wr-diag-enter {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.waiting-room__diag-text {
+  font-family: var(--wr-font);
+  font-size: 0.6rem;
+  color: var(--wr-green);
+  letter-spacing: 0.1em;
+  line-height: 1.6;
+  word-break: break-all;
+}
+
+.waiting-room__diag-text--result {
+  color: var(--wr-green);
+  font-weight: 700;
+  text-shadow: 0 0 8px var(--wr-green-dim);
+}
+
+/* ── CRT glitch effect ── */
+.waiting-room__glitch-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.waiting-room__glitch-layer--active {
+  animation: wr-glitch 0.25s steps(3) forwards;
+}
+
+@keyframes wr-glitch {
+  0% {
+    opacity: 1;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent 0px,
+      transparent 2px,
+      rgba(194, 214, 133, 0.03) 2px,
+      rgba(194, 214, 133, 0.03) 4px
+    );
+    filter: none;
+  }
+  25% {
+    opacity: 0.8;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent 0px,
+      transparent 1px,
+      rgba(114, 52, 53, 0.06) 1px,
+      rgba(114, 52, 53, 0.06) 3px
+    );
+    transform: translateX(-2px);
+  }
+  50% {
+    opacity: 1;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent 0px,
+      transparent 3px,
+      rgba(194, 214, 133, 0.04) 3px,
+      rgba(194, 214, 133, 0.04) 5px
+    );
+    transform: translateX(3px) skewX(-0.5deg);
+  }
+  75% {
+    opacity: 0.6;
+    transform: translateX(-1px);
+  }
+  100% {
+    opacity: 0;
+    transform: none;
+  }
+}
+
+/* Chromatic aberration on the viewport during glitch */
+.waiting-room__viewport--glitch canvas {
+  animation: wr-chromatic 0.25s steps(2) forwards;
+}
+
+@keyframes wr-chromatic {
+  0%   { filter: none; }
+  25%  { filter: drop-shadow(2px 0 0 rgba(255, 0, 0, 0.3)) drop-shadow(-2px 0 0 rgba(0, 100, 255, 0.3)); }
+  50%  { filter: drop-shadow(-3px 0 0 rgba(255, 0, 0, 0.2)) drop-shadow(3px 0 0 rgba(0, 100, 255, 0.2)); }
+  75%  { filter: drop-shadow(1px 0 0 rgba(255, 0, 0, 0.4)) drop-shadow(-1px 0 0 rgba(0, 100, 255, 0.4)); }
+  100% { filter: none; }
+}
+
+/* ── Scanline overlay (always-on subtle) ── */
+.waiting-room__scanlines {
+  position: fixed;
+  inset: 0;
+  z-index: 11;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0px,
+    transparent 2px,
+    rgba(0, 0, 0, 0.08) 2px,
+    rgba(0, 0, 0, 0.08) 4px
+  );
+  opacity: 0.5;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .waiting-room__header {
+    top: 1rem;
+    left: 1rem;
+  }
+
+  .waiting-room__crypto-panel {
+    top: auto;
+    bottom: 10rem;
+    left: 1rem;
+    right: 1rem;
+    width: auto;
+    max-height: 30vh;
+    transform: none;
+  }
+
+  @keyframes wr-panel-enter {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  .waiting-room__status-bar {
+    bottom: 2rem;
+  }
+
+  .waiting-room__status-text {
+    font-size: clamp(0.9rem, 3vw, 1.4rem);
+  }
+
+  .waiting-room__diag-popup {
+    right: 1rem;
+    left: 1rem;
+    bottom: auto;
+    top: 5rem;
+    max-width: none;
+  }
+
+  .waiting-room__corner {
+    width: 32px;
+    height: 32px;
+  }
+
+  .waiting-room__corner-inner {
+    width: 18px;
+    height: 18px;
+  }
+}

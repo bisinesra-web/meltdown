@@ -14,6 +14,7 @@ import Join from './pages/join'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import AdminPage from './pages/admin'
 import TeamSetup from './pages/team-setup'
+import WaitingRoom from './pages/waiting'
 
 const queryClient = new QueryClient()
 
@@ -60,12 +61,19 @@ const teamChooseRoute = createRoute({
   component: TeamSetup,
 })
 
+const waitingRoomRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/waiting-room',
+  component: WaitingRoom,
+})
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   aboutRoute,
   joinRoute,
   adminRoute,
   teamChooseRoute,
+  waitingRoomRoute,
 ])
 
 const router = createRouter({
