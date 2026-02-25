@@ -26,10 +26,12 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { gsap } from 'gsap'
 import '@fontsource-variable/jetbrains-mono'
 
-import Squares from '../components/scrolling-bg'
-import DiagnosticPopup, { useDiagnosticPing } from '../components/diagnostic-popup'
-import { useCrtGlitch } from '../hooks/useCrtGlitch'
+import Squares from '../../components/scrolling-bg'
+import DiagnosticPopup, { useDiagnosticPing } from '../../components/diagnostic-popup'
+import { useCrtGlitch } from '../../hooks/useCrtGlitch'
+import { useGameState } from '../../hooks/useGameState'
 import './waiting.css'
+import { useNavigate } from '@tanstack/react-router'
 
 /* ── Material name → friendly sector label mapping ── */
 const SECTOR_MAP: Record<string, string> = {
@@ -55,6 +57,25 @@ const SECTOR_MAP: Record<string, string> = {
 const REACTOR_NAMES = new Set(['reactora', 'reactorb'])
 
 export default function WaitingRoom() {
+  const navigate = useNavigate()
+  const [textContent, setTextContent] = React.useState('AWAITING EXTERNAL CONNECTION...')
+  const phase = useGameState(s => s.phase)
+
+  // Handle phase transitions and navigation
+  useEffect(() => {
+    console.log('[WaitingRoom] Phase changed:', phase)
+
+    if (phase === 'GAME_OVER') {
+      setTextContent('GAME OVER. RETURNING TO LOBBY...')
+      navigate({ to: '/join' }).catch(console.error)
+    }
+    else if (phase !== 'WAITING_FOR_PLAYERS') {
+      setTextContent('EXTERNAL CONNECTION ESTABLISHED!')
+      setTimeout(() => {
+        navigate({ to: '/game/1' }).catch(console.error)
+      }, 1500)
+    }
+  }, [phase, navigate])
   const mountReference = useRef<HTMLDivElement | null>(null)
   const initializedReference = useRef(false)
   const modelReference = useRef<Group | null>(null)
@@ -240,7 +261,7 @@ export default function WaitingRoom() {
 
     // We'll create the scanner plane geometry after loading the model
     // so we can size it exactly to the model's bounds.
-    let scannerPlane: Mesh | null = null
+    let scannerPlane: Mesh | undefined
 
     /* ── Load model ── */
     const darkGreen = new Color('#6B7548')
@@ -498,7 +519,7 @@ export default function WaitingRoom() {
         {/* Bottom status text */}
         <div className='waiting-room__status-bar'>
           <span className='waiting-room__status-text'>
-            AWAITING EXTERNAL CONNECTION
+            {textContent}
             <span className='waiting-room__cursor' />
           </span>
         </div>

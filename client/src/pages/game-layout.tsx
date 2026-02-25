@@ -4,7 +4,7 @@ import { useSocketStore } from '../stores/socket-store'
 
 export function GameLayout() {
   const navigate = useNavigate()
-  const { status, connect, requiresJoin } = useSocketStore()
+  const { connect, requiresJoin } = useSocketStore()
 
   useEffect(() => {
     console.log('[GameLayout] Component mounted, connecting socket')
@@ -25,24 +25,6 @@ export function GameLayout() {
   }, [requiresJoin, navigate])
 
   return (
-    <div className='game-wrapper'>
-      <div
-        className='connection-status'
-        data-status={status}
-        style={{
-          padding: '10px',
-          marginBottom: '10px',
-          backgroundColor: status === 'connected' ? '#4caf50' : '#ff9800',
-          color: 'white',
-          borderRadius: '4px',
-          fontWeight: 'bold',
-        }}
-      >
-        Socket Status:
-        {' '}
-        {status}
-      </div>
-      <Outlet />
-    </div>
+    <Outlet />
   )
 }

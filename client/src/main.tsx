@@ -14,7 +14,7 @@ import Join from './pages/join'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import AdminPage from './pages/admin'
 import TeamSetup from './pages/team-setup'
-import WaitingRoom from './pages/waiting'
+import WaitingRoom from './pages/game/waiting'
 import { GameLayout } from './pages/game-layout'
 import GameRoute1 from './pages/game/route-1'
 import GameRoute2 from './pages/game/route-2'
@@ -64,12 +64,6 @@ const teamChooseRoute = createRoute({
   component: TeamSetup,
 })
 
-const waitingRoomRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/waiting-room',
-  component: WaitingRoom,
-})
-
 const gameLayoutRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/game',
@@ -80,6 +74,12 @@ const gameRoute1 = createRoute({
   getParentRoute: () => gameLayoutRoute,
   path: '/1',
   component: GameRoute1,
+})
+
+const waitingRoomRoute = createRoute({
+  getParentRoute: () => gameLayoutRoute,
+  path: '/wait',
+  component: WaitingRoom,
 })
 
 const gameRoute2 = createRoute({
@@ -94,8 +94,7 @@ const routeTree = rootRoute.addChildren([
   joinRoute,
   adminRoute,
   teamChooseRoute,
-  waitingRoomRoute,
-  gameLayoutRoute.addChildren([gameRoute1, gameRoute2]),
+  gameLayoutRoute.addChildren([gameRoute1, waitingRoomRoute, gameRoute2]),
 ])
 
 const router = createRouter({

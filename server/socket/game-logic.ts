@@ -19,7 +19,7 @@ export type { StoredGameState as GameState } from './game-types.js'
 declare module 'socket.io' {
   interface Socket {
     roomCode: string
-    playerNumber: 1 | 2,
+    playerNumber: 1 | 2
   }
 }
 
@@ -134,11 +134,31 @@ async function ensureStateInitialised(roomCode: string): Promise<void> {
 }
 
 /**
- * Returns the number of sockets currently joined to `roomCode`.
+ * Checks if both player 1 AND player 2 have at least one socket connected.
+ * Returns true only if we have at least one connection for each unique player.
  */
-async function connectedCount(io: Server, roomCode: string): Promise<number> {
+async function areBothPlayersConnected(io: Server, roomCode: string): Promise<boolean> {
   const sockets = await io.in(roomCode).fetchSockets()
-  return sockets.length
+
+  let hasPlayer1 = false
+  let hasPlayer2 = false
+
+  for (const socket of sockets) {
+    const playerNumber = (socket.data as Record<string, unknown>).playerNumber as 1 | 2 | undefined
+    if (playerNumber === 1) {
+      hasPlayer1 = true
+    }
+
+    if (playerNumber === 2) {
+      hasPlayer2 = true
+    }
+
+    if (hasPlayer1 && hasPlayer2) {
+      break
+    }
+  }
+
+  return hasPlayer1 && hasPlayer2
 }
 
 // ---------------------------------------------------------------------------
@@ -168,8 +188,8 @@ export function registerGameHandlers(io: Server): void {
 
       // 4. If both players are now present in WAITING_FOR_PLAYERS, start
       //    the 5-second countdown
-      const count = await connectedCount(io, roomCode)
-      if (count >= 2) {
+      const bothConnected = await areBothPlayersConnected(io, roomCode)
+      if (bothConnected) {
         await recordBothPlayersConnected(io, roomCode)
       }
     })().catch((error: unknown) => {

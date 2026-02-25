@@ -44,9 +44,7 @@ export default function TeamSetup() {
       { roomCode, teamName: selectedTeam },
       {
         onSuccess() {
-          // eslint-disable-next-line no-alert
-          globalThis.alert(`ACCESS GRANTED — Welcome, ${selectedTeam}`)
-          // Navigate to /play once that page exists
+          navigate({ to: '/game/wait' }).catch(console.error)
         },
       },
     )

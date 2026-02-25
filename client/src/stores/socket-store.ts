@@ -1,6 +1,8 @@
 import { create } from 'zustand'
 import { getSocket, destroySocket } from '../lib/socket'
+import { safeParseSocketMessage, GameStateEventSchema } from '../lib/socket-message-validator'
 import { useRoomStore } from './room-store'
+import { useGameStore } from './game-store'
 
 type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error'
 
@@ -88,6 +90,27 @@ export const useSocketStore = create<SocketState>(set => ({
       })
     })
 
+    // Subscribe to game state events and forward to game store
+    socket.on('game:state', (rawData: unknown) => {
+      const result = safeParseSocketMessage(GameStateEventSchema, rawData)
+      if (!result.success) {
+        console.error(
+          '[SocketStore] Validation failed for game:state event:',
+          result.error.issues,
+        )
+        return
+      }
+
+      const { data } = result
+      if (data.public) {
+        useGameStore.getState().updatePublicState(data.public)
+      }
+
+      if (data.private) {
+        useGameStore.getState().updatePrivateState(data.private)
+      }
+    })
+
     console.log('[SocketStore] Calling socket.connect()')
     socket.connect()
   },
@@ -95,6 +118,7 @@ export const useSocketStore = create<SocketState>(set => ({
   disconnect() {
     console.log('[SocketStore] disconnect() called')
     destroySocket()
+    useGameStore.getState().reset()
     set({ status: 'disconnected', requiresJoin: false })
   },
 }))

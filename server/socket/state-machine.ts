@@ -188,8 +188,8 @@ export function scheduleNextTimer(io: Server, roomCode: string, state: StoredGam
         break
       }
 
-      // → COIN_TOSSING after 5 s from when both players first connected
-      const delay = msRemaining(state.bothPlayersConnectedAt, 5000)
+      // → COIN_TOSSING after 1 s from when both players first connected
+      const delay = msRemaining(state.bothPlayersConnectedAt, 1000)
       pendingTimers.set(
         roomCode,
         setTimeout(() => {
