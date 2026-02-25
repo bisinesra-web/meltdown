@@ -2,19 +2,24 @@ import type { Server, Socket } from 'socket.io'
 import { database } from '../database.js'
 import { getRoomByCode } from '../routes/rooms.js'
 import { logger } from '../logger.js'
+import type { StoredGameState } from './game-types.js'
+import {
+  createInitialState,
+  buildPublicState,
+  buildPrivateState,
+  ensureTimersScheduled,
+  recordBothPlayersConnected,
+  handleCipherSelect,
+} from './state-machine.js'
 
-export interface GameState {
-  turn: number
-  currentPlayer: 1 | 2
-  status: 'waiting' | 'active' | 'finished'
-  [key: string]: unknown
-}
+// Re-export so external consumers (e.g. index.ts) keep working
+export type { StoredGameState as GameState } from './game-types.js'
 
 // Extend Socket type with authenticated player info
 declare module 'socket.io' {
   interface Socket {
     roomCode: string
-    playerNumber: 1 | 2
+    playerNumber: 1 | 2,
   }
 }
 
@@ -57,9 +62,9 @@ async function authenticateSocket(
 
     // Block joins on finished rooms
     if (room.room_state) {
-      const state = JSON.parse(room.room_state) as GameState
-      if (state.status === 'finished') {
-        logger.info('Rejected join: room finished', { roomCode, socketId: socket.id })
+      const state = JSON.parse(room.room_state) as StoredGameState
+      if (state.phase === 'GAME_OVER') {
+        logger.info('Rejected join: game over', { roomCode, socketId: socket.id })
         next(new Error('Game is finished'))
         return
       }
@@ -67,6 +72,9 @@ async function authenticateSocket(
 
     socket.roomCode = roomCode
     socket.playerNumber = playerNumber
+    // Also store on socket.data so fetchSockets() payloads carry the values
+    socket.data.roomCode = roomCode
+    socket.data.playerNumber = playerNumber
     logger.info('Socket authenticated', { socketId: socket.id, roomCode, playerNumber })
     next()
   }
@@ -88,90 +96,49 @@ export function createAuthMiddleware() {
 }
 
 // ---------------------------------------------------------------------------
-// State helpers
-// ---------------------------------------------------------------------------
-
-async function emitStateToSocket(socket: Socket): Promise<void> {
-  const room = await getRoomByCode(socket.roomCode)
-  if (!room) {
-    return
-  }
-
-  const state: GameState | undefined = room.room_state
-    ? (JSON.parse(room.room_state) as GameState)
-    : undefined
-
-  socket.emit('game:state', { state })
-}
-
-// ---------------------------------------------------------------------------
-// Move handler
-// ---------------------------------------------------------------------------
-
-async function handleMove(io: Server, socket: Socket, payload: unknown): Promise<void> {
-  const { roomCode, playerNumber } = socket
-
-  const room = await getRoomByCode(roomCode)
-  if (!room) {
-    socket.emit('game:error', { message: 'Room not found' })
-    return
-  }
-
-  if (!room.room_state) {
-    socket.emit('game:error', { message: 'Game has not started' })
-    return
-  }
-
-  const state = JSON.parse(room.room_state) as GameState
-
-  if (state.status === 'finished') {
-    socket.emit('game:error', { message: 'Game is already finished' })
-    return
-  }
-
-  if (state.currentPlayer !== playerNumber) {
-    socket.emit('game:error', { message: 'Not your turn' })
-    return
-  }
-
-  const newState = applyMove(state, payload)
-  if (!newState) {
-    socket.emit('game:error', { message: 'Invalid move' })
-    return
-  }
-
-  await database.run(
-    'UPDATE rooms SET room_state = ?, updated_at = CURRENT_TIMESTAMP WHERE room_code = ?',
-    JSON.stringify(newState),
-    roomCode,
-  )
-
-  logger.info('Move applied', { roomCode, playerNumber, turn: newState.turn })
-
-  io.to(roomCode).emit('game:state', { state: newState })
-}
-
-// ---------------------------------------------------------------------------
-// Game logic — replace with real rules
+// Helpers
 // ---------------------------------------------------------------------------
 
 /**
- * Validate and apply a move to the current state.
- * Returns the new state, or undefined if the move is invalid.
- *
- * TODO: Replace with actual game-specific move validation and application.
+ * Sends the current state directly to `socket` only (used on reconnect).
+ * Emits both the public broadcast payload and the player's own private state.
  */
-function applyMove(state: GameState, payload: unknown): GameState | undefined {
-  if (typeof payload !== 'object' || payload === null) {
-    return undefined
+async function emitStateToSocket(socket: Socket): Promise<void> {
+  const room = await getRoomByCode(socket.roomCode)
+  if (!room?.room_state) {
+    return
   }
 
-  return {
-    ...state,
-    turn: state.turn + 1,
-    currentPlayer: state.currentPlayer === 1 ? 2 : 1,
-    lastMove: payload,
+  const stored = JSON.parse(room.room_state) as StoredGameState
+  socket.emit('game:state', { public: buildPublicState(stored, room) })
+  socket.emit('game:private_state', { private: buildPrivateState(stored, socket.playerNumber) })
+}
+
+/**
+ * Initialises `room_state` to WAITING_FOR_PLAYERS when the first socket
+ * connects to a room that has no state yet.
+ */
+async function ensureStateInitialised(roomCode: string): Promise<void> {
+  const room = await getRoomByCode(roomCode)
+  if (!room || room.room_state) {
+    return
   }
+
+  const initial = createInitialState()
+  await database.run(
+    'UPDATE rooms SET room_state = ?, updated_at = CURRENT_TIMESTAMP WHERE room_code = ?',
+    JSON.stringify(initial),
+    roomCode,
+  )
+  logger.info('Room state initialised', { roomCode })
+}
+
+/**
+ * Returns the number of sockets currently joined to `roomCode`.
+ */
+async function connectedCount(io: Server, roomCode: string): Promise<number> {
+  const sockets = await io.in(roomCode).fetchSockets()
+  return sockets.length
 }
 
 // ---------------------------------------------------------------------------
@@ -184,22 +151,55 @@ export function registerGameHandlers(io: Server): void {
     logger.info('Player connected', { socketId: socket.id, roomCode, playerNumber })
 
     // Join the Socket.IO room identified by room code
-    Promise.resolve(socket.join(roomCode)).catch((error: unknown) => {
-      logger.error('Failed to join socket room', { socketId: socket.id, roomCode, error })
+    socket.join(roomCode)?.catch((error: unknown) => {
+      logger.error('Failed to join Socket.IO room', { socketId: socket.id, roomCode, error })
+    });
+
+    // Run async connection setup sequentially
+    (async () => {
+      // 1. Initialise DB state if this is the very first connection
+      await ensureStateInitialised(roomCode)
+
+      // 2. Re-arm any timed transition that may be pending (handles restarts)
+      await ensureTimersScheduled(io, roomCode)
+
+      // 3. Deliver full current state to the reconnecting / joining socket
+      await emitStateToSocket(socket)
+
+      // 4. If both players are now present in WAITING_FOR_PLAYERS, start
+      //    the 5-second countdown
+      const count = await connectedCount(io, roomCode)
+      if (count >= 2) {
+        await recordBothPlayersConnected(io, roomCode)
+      }
+    })().catch((error: unknown) => {
+      logger.error('Connection setup error', { socketId: socket.id, roomCode, error })
     })
 
-    // Send the full current state immediately (handles reconnects transparently)
-    emitStateToSocket(socket).catch((error: unknown) => {
-      logger.error('Error emitting state on connect', { socketId: socket.id, error })
-    })
+    // -----------------------------------------------------------------------
+    // game:select_cipher — player submits their cipher choice during PRE_ROUND
+    // -----------------------------------------------------------------------
+    socket.on('game:select_cipher', (payload: unknown) => {
+      if (
+        typeof payload !== 'object'
+        || payload === null
+        || typeof (payload as Record<string, unknown>).cipher !== 'string'
+      ) {
+        socket.emit('game:error', { message: 'cipher must be a string' })
+        return
+      }
 
-    socket.on('game:move', (payload: unknown) => {
-      handleMove(io, socket, payload).catch((error: unknown) => {
-        logger.error('Error handling move', { socketId: socket.id, error })
-        socket.emit('game:error', { message: 'Failed to process move' })
+      const { cipher } = payload as { cipher: string }
+
+      handleCipherSelect(io, roomCode, playerNumber, cipher).catch((error: unknown) => {
+        logger.error('Error handling cipher select', { socketId: socket.id, error })
+        socket.emit('game:error', { message: 'Failed to process cipher selection' })
       })
     })
 
+    // -----------------------------------------------------------------------
+    // disconnect
+    // -----------------------------------------------------------------------
     socket.on('disconnect', (reason) => {
       logger.info('Player disconnected', {
         socketId: socket.id,
