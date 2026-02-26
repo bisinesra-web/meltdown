@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable */
 // @ts-nocheck
 "use strict";
 
@@ -5508,6 +5509,39 @@ const RAW_RUNTIME_STATE =
         "linkType": "HARD"\
       }]\
     ]],\
+    ["framer-motion", [\
+      ["npm:12.34.3", {\
+        "packageLocation": "../.yarn/berry/cache/framer-motion-npm-12.34.3-25449a5cf1-10c0.zip/node_modules/framer-motion/",\
+        "packageDependencies": [\
+          ["framer-motion", "npm:12.34.3"]\
+        ],\
+        "linkType": "SOFT"\
+      }],\
+      ["virtual:2050293bfadf055f2ad47f77612a8b0562adc392ee11032cb4bec7f7cfb4bee7eda738e12234cf27352e8107f25e3d3f314e5bbc8f07345e23219386b37a74b0#npm:12.34.3", {\
+        "packageLocation": "./.yarn/__virtual__/framer-motion-virtual-29c4e2c2f3/2/.yarn/berry/cache/framer-motion-npm-12.34.3-25449a5cf1-10c0.zip/node_modules/framer-motion/",\
+        "packageDependencies": [\
+          ["@emotion/is-prop-valid", null],\
+          ["@types/emotion__is-prop-valid", null],\
+          ["@types/react", "npm:19.2.13"],\
+          ["@types/react-dom", "virtual:52559bc7a23c1a5cc43f928635bcec09b168c6fbcdf47eb91629b72fe234fd56f7919b97564d96c240b5124ba5e9edf82f582f7f38ff04c70441ba87f1d6a408#npm:19.2.3"],\
+          ["framer-motion", "virtual:2050293bfadf055f2ad47f77612a8b0562adc392ee11032cb4bec7f7cfb4bee7eda738e12234cf27352e8107f25e3d3f314e5bbc8f07345e23219386b37a74b0#npm:12.34.3"],\
+          ["motion-dom", "npm:12.34.3"],\
+          ["motion-utils", "npm:12.29.2"],\
+          ["react", "npm:19.2.4"],\
+          ["react-dom", "virtual:52559bc7a23c1a5cc43f928635bcec09b168c6fbcdf47eb91629b72fe234fd56f7919b97564d96c240b5124ba5e9edf82f582f7f38ff04c70441ba87f1d6a408#npm:19.2.4"],\
+          ["tslib", "npm:2.8.1"]\
+        ],\
+        "packagePeers": [\
+          "@emotion/is-prop-valid",\
+          "@types/emotion__is-prop-valid",\
+          "@types/react-dom",\
+          "@types/react",\
+          "react-dom",\
+          "react"\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
     ["fresh", [\
       ["npm:2.0.0", {\
         "packageLocation": "../.yarn/berry/cache/fresh-npm-2.0.0-b0c1795dff-10c0.zip/node_modules/fresh/",\
@@ -7364,6 +7398,57 @@ const RAW_RUNTIME_STATE =
         "linkType": "HARD"\
       }]\
     ]],\
+    ["motion", [\
+      ["npm:12.34.3", {\
+        "packageLocation": "../.yarn/berry/cache/motion-npm-12.34.3-32e237a5b1-10c0.zip/node_modules/motion/",\
+        "packageDependencies": [\
+          ["motion", "npm:12.34.3"]\
+        ],\
+        "linkType": "SOFT"\
+      }],\
+      ["virtual:52559bc7a23c1a5cc43f928635bcec09b168c6fbcdf47eb91629b72fe234fd56f7919b97564d96c240b5124ba5e9edf82f582f7f38ff04c70441ba87f1d6a408#npm:12.34.3", {\
+        "packageLocation": "./.yarn/__virtual__/motion-virtual-2050293bfa/2/.yarn/berry/cache/motion-npm-12.34.3-32e237a5b1-10c0.zip/node_modules/motion/",\
+        "packageDependencies": [\
+          ["@emotion/is-prop-valid", null],\
+          ["@types/emotion__is-prop-valid", null],\
+          ["@types/react", "npm:19.2.13"],\
+          ["@types/react-dom", "virtual:52559bc7a23c1a5cc43f928635bcec09b168c6fbcdf47eb91629b72fe234fd56f7919b97564d96c240b5124ba5e9edf82f582f7f38ff04c70441ba87f1d6a408#npm:19.2.3"],\
+          ["framer-motion", "virtual:2050293bfadf055f2ad47f77612a8b0562adc392ee11032cb4bec7f7cfb4bee7eda738e12234cf27352e8107f25e3d3f314e5bbc8f07345e23219386b37a74b0#npm:12.34.3"],\
+          ["motion", "virtual:52559bc7a23c1a5cc43f928635bcec09b168c6fbcdf47eb91629b72fe234fd56f7919b97564d96c240b5124ba5e9edf82f582f7f38ff04c70441ba87f1d6a408#npm:12.34.3"],\
+          ["react", "npm:19.2.4"],\
+          ["react-dom", "virtual:52559bc7a23c1a5cc43f928635bcec09b168c6fbcdf47eb91629b72fe234fd56f7919b97564d96c240b5124ba5e9edf82f582f7f38ff04c70441ba87f1d6a408#npm:19.2.4"],\
+          ["tslib", "npm:2.8.1"]\
+        ],\
+        "packagePeers": [\
+          "@emotion/is-prop-valid",\
+          "@types/emotion__is-prop-valid",\
+          "@types/react-dom",\
+          "@types/react",\
+          "react-dom",\
+          "react"\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
+    ["motion-dom", [\
+      ["npm:12.34.3", {\
+        "packageLocation": "../.yarn/berry/cache/motion-dom-npm-12.34.3-725070bd53-10c0.zip/node_modules/motion-dom/",\
+        "packageDependencies": [\
+          ["motion-dom", "npm:12.34.3"],\
+          ["motion-utils", "npm:12.29.2"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
+    ["motion-utils", [\
+      ["npm:12.29.2", {\
+        "packageLocation": "../.yarn/berry/cache/motion-utils-npm-12.29.2-868aec7208-10c0.zip/node_modules/motion-utils/",\
+        "packageDependencies": [\
+          ["motion-utils", "npm:12.29.2"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
     ["ms", [\
       ["npm:2.1.3", {\
         "packageLocation": "../.yarn/berry/cache/ms-npm-2.1.3-81ff3cfac1-10c0.zip/node_modules/ms/",\
@@ -8309,6 +8394,7 @@ const RAW_RUNTIME_STATE =
           ["gsap", "npm:3.14.2"],\
           ["immer", "npm:11.1.4"],\
           ["locomotive-scroll", "npm:5.0.1"],\
+          ["motion", "virtual:52559bc7a23c1a5cc43f928635bcec09b168c6fbcdf47eb91629b72fe234fd56f7919b97564d96c240b5124ba5e9edf82f582f7f38ff04c70441ba87f1d6a408#npm:12.34.3"],\
           ["react", "npm:19.2.4"],\
           ["react-dom", "virtual:52559bc7a23c1a5cc43f928635bcec09b168c6fbcdf47eb91629b72fe234fd56f7919b97564d96c240b5124ba5e9edf82f582f7f38ff04c70441ba87f1d6a408#npm:19.2.4"],\
           ["reactor-game-client", "workspace:client"],\
@@ -16969,7 +17055,7 @@ function arg(
 		}
 
 		if (wholeArg.length > 1 && wholeArg[0] === '-') {
-			 
+			/* eslint-disable operator-linebreak */
 			const separatedArguments =
 				wholeArg[1] === '-' || wholeArg.length === 2
 					? [wholeArg]
@@ -16977,7 +17063,7 @@ function arg(
 							.slice(1)
 							.split('')
 							.map((a) => `-${a}`);
-			 
+			/* eslint-enable operator-linebreak */
 
 			for (let j = 0; j < separatedArguments.length; j++) {
 				const arg = separatedArguments[j];
@@ -17020,7 +17106,7 @@ function arg(
 							!(
 								argv[i + 1].match(/^-?\d*(\.(?=\d))?\d*$/) &&
 								(type === Number ||
-									 
+									// eslint-disable-next-line no-undef
 									(typeof BigInt !== 'undefined' && type === BigInt))
 							))
 					) {

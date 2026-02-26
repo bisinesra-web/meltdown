@@ -1,0 +1,708 @@
+/* ── Scoped reset — affects only .toss-page and its children ── */
+.toss-page,
+.toss-page *,
+.toss-page *::before,
+.toss-page *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── Design tokens ── */
+.toss-page {
+  --tp-red:           #723435;
+  --tp-red-glow:      rgba(114, 52, 53, 0.7);
+  --tp-red-dim:       rgba(114, 52, 53, 0.35);
+  --tp-green:         #C2D685;
+  --tp-green-dim:     rgba(194, 214, 133, 0.45);
+  --tp-green-glow:    rgba(194, 214, 133, 0.18);
+  --tp-dark-green:    #535C39;
+  --tp-black:         #0a0a0a;
+  --tp-border:        rgba(194, 214, 133, 0.22);
+  --tp-border-red:    rgba(114, 52, 53, 0.35);
+  --tp-font:          "JetBrains Mono Variable", "Courier New", monospace;
+
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background-color: transparent;
+  z-index: 1;
+  font-family: var(--tp-font);
+}
+
+/* ── Entry overlay ── */
+.toss-page__entry-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: #000;
+  pointer-events: none;
+  animation: tp-overlay-out 0.4s ease-out 0.05s both;
+}
+
+@keyframes tp-overlay-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+/* ── Scanlines ── */
+.toss-page__scanlines {
+  position: fixed;
+  inset: 0;
+  z-index: 11;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0px,
+    transparent 2px,
+    rgba(0, 0, 0, 0.09) 2px,
+    rgba(0, 0, 0, 0.09) 4px
+  );
+  opacity: 0.55;
+}
+
+/* ── Vignette ── */
+.toss-page__vignette {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 0%,
+    transparent 30%,
+    rgba(0, 0, 0, 0.46) 55%,
+    rgba(0, 0, 0, 0.92) 100%
+  );
+  transition: background 0.6s ease;
+}
+
+/* Alarm vignette for sabotager */
+.toss-page__vignette--alarm {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(114, 52, 53, 0.05) 0%,
+    rgba(114, 52, 53, 0.05) 20%,
+    rgba(80, 10, 10, 0.55) 55%,
+    rgba(30, 0, 0, 0.97) 100%
+  );
+  animation: tp-alarm-vignette 1.8s ease-in-out infinite;
+}
+
+@keyframes tp-alarm-vignette {
+  0%, 100% {
+    box-shadow: inset 0 0 120px rgba(114, 52, 53, 0.45);
+  }
+  50% {
+    box-shadow: inset 0 0 200px rgba(114, 52, 53, 0.8);
+  }
+}
+
+/* ── CRT glitch layer ── */
+.toss-page__glitch-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.toss-page__glitch-layer--active {
+  animation: tp-glitch 0.28s steps(3) forwards;
+}
+
+@keyframes tp-glitch {
+  0% {
+    opacity: 1;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent 0px, transparent 2px,
+      rgba(194, 214, 133, 0.04) 2px, rgba(194, 214, 133, 0.04) 4px
+    );
+    filter: none;
+  }
+  25% {
+    opacity: 0.8;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent 0px, transparent 1px,
+      rgba(114, 52, 53, 0.07) 1px, rgba(114, 52, 53, 0.07) 3px
+    );
+    transform: translateX(-3px);
+  }
+  50% {
+    opacity: 1;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent 0px, transparent 3px,
+      rgba(194, 214, 133, 0.05) 3px, rgba(194, 214, 133, 0.05) 5px
+    );
+    transform: translateX(4px) skewX(-0.8deg);
+  }
+  75% {
+    opacity: 0.6;
+    transform: translateX(-2px);
+  }
+  100% {
+    opacity: 0;
+    transform: none;
+  }
+}
+
+/* ── Reveal overlay — the "color wash" flash ── */
+.toss-page__reveal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+  animation: tp-reveal-flash 0.55s ease-out forwards;
+}
+
+.toss-page__reveal-overlay--controller {
+  background: rgba(194, 214, 133, 0.28);
+}
+
+.toss-page__reveal-overlay--sabotager {
+  background: rgba(114, 52, 53, 0.38);
+}
+
+.toss-page__reveal-overlay--settled {
+  animation: none;
+  opacity: 0;
+}
+
+@keyframes tp-reveal-flash {
+  0%   { opacity: 0; }
+  15%  { opacity: 1; }
+  35%  { opacity: 0.7; }
+  60%  { opacity: 0.3; }
+  100% { opacity: 0; }
+}
+
+/* ── Heavy cinematic glitch burst (triggered on COIN_TOSSED) ── */
+.toss-page__cinematic-glitch {
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  pointer-events: none;
+  animation: tp-cinematic 0.6s steps(4) forwards;
+}
+
+@keyframes tp-cinematic {
+  0%   { opacity: 0; filter: none; transform: none; background: transparent; }
+  10%  { opacity: 1; filter: brightness(3) saturate(0); transform: skewX(-1.5deg) scaleY(1.01); background: rgba(255,255,255,0.08); }
+  25%  { opacity: 0.6; filter: none; transform: skewX(1deg) translateX(-4px); background: transparent; }
+  40%  { opacity: 0.9; filter: brightness(2.2) saturate(0); transform: skewX(-0.5deg) translateX(3px); background: rgba(255,255,255,0.06); }
+  65%  { opacity: 0.4; filter: none; transform: none; }
+  100% { opacity: 0; filter: none; transform: none; }
+}
+
+/* ── Red alarm border pulse (sabotager only) ── */
+.toss-page__alarm-border {
+  position: fixed;
+  inset: 0;
+  z-index: 13;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 3px var(--tp-red);
+  animation: tp-alarm-border 1.4s ease-in-out infinite;
+}
+
+@keyframes tp-alarm-border {
+  0%, 100% {
+    box-shadow:
+      inset 0 0 0 3px var(--tp-red),
+      inset 0 0 40px rgba(114, 52, 53, 0.3);
+  }
+  50% {
+    box-shadow:
+      inset 0 0 0 3px rgba(114, 52, 53, 0.9),
+      inset 0 0 90px rgba(114, 52, 53, 0.6);
+  }
+}
+
+/* ── Header ── */
+.toss-page__header {
+  position: fixed;
+  top: 2rem;
+  left: 2rem;
+  z-index: 15;
+  animation: tp-fade-down 0.4s ease-out 0.3s both;
+}
+
+.toss-page__title {
+  font-family: var(--tp-font);
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 900;
+  color: var(--tp-red);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  text-shadow:
+    0 0 20px rgba(114, 52, 53, 0.8),
+    0 0 40px rgba(114, 52, 53, 0.5),
+    0 0 60px rgba(114, 52, 53, 0.3);
+}
+
+@keyframes tp-fade-down {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+
+/* Horizontal bar */
+.toss-page__corner > span:first-child { width: 20px; height: 2px; }
+/* Vertical bar */
+.toss-page__corner > span:last-child  { width: 2px; height: 20px; }
+
+.toss-page__corner--tl > span:first-child { top: 0; left: 0; }
+.toss-page__corner--tl > span:last-child  { top: 0; left: 0; }
+
+.toss-page__corner--tr > span:first-child { top: 0; right: 0; }
+.toss-page__corner--tr > span:last-child  { top: 0; right: 0; }
+
+.toss-page__corner--bl > span:first-child { bottom: 0; left: 0; }
+.toss-page__corner--bl > span:last-child  { bottom: 0; left: 0; }
+
+.toss-page__corner--br > span:first-child { bottom: 0; right: 0; }
+.toss-page__corner--br > span:last-child  { bottom: 0; right: 0; }
+
+/* Red corners on sabotager reveal */
+.toss-page__corner--alarm > span {
+  background: var(--tp-red);
+  box-shadow: 0 0 8px var(--tp-red-glow);
+}
+
+/* ── Three.js cube mount ── */
+.toss-page__cube-mount {
+  width: 260px;
+  height: 260px;
+  flex-shrink: 0;
+  transition: width 0.6s ease, height 0.6s ease;
+}
+
+.toss-page__cube-mount canvas {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Small cube in result view (corner) */
+.toss-page__cube-mount--result {
+  position: fixed;
+  bottom: 5rem;
+  right: 2.5rem;
+  width: 110px;
+  height: 110px;
+  z-index: 15;
+  opacity: 0.7;
+}
+
+/* ── Main content layout ── */
+.toss-page__main {
+  position: fixed;
+  inset: 0;
+  z-index: 12;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* ── Arena (pre-reveal) ── */
+.toss-page__arena {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3rem;
+  width: 100%;
+  padding: 0 2rem;
+  animation: tp-arena-enter 0.5s ease-out 0.4s both;
+}
+
+.toss-page__arena--hidden {
+  display: none;
+}
+
+@keyframes tp-arena-enter {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Node blocks ── */
+.toss-page__node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: clamp(140px, 20vw, 220px);
+  padding: 1.5rem 1.25rem;
+  border: 1px solid var(--tp-border);
+  background: rgba(10, 10, 10, 0.78);
+  backdrop-filter: blur(3px);
+  animation: tp-node-enter 0.45s ease-out 0.55s both;
+  position: relative;
+}
+
+/* Corner details on nodes */
+.toss-page__node::before,
+.toss-page__node::after {
+  content: '';
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-color: var(--tp-green);
+  border-style: solid;
+  opacity: 0.5;
+}
+.toss-page__node::before { top: -1px; left: -1px; border-width: 1px 0 0 1px; }
+.toss-page__node::after  { bottom: -1px; right: -1px; border-width: 0 1px 1px 0; }
+
+.toss-page__node--a {
+  animation-delay: 0.5s;
+}
+.toss-page__node--b {
+  animation-delay: 0.65s;
+}
+
+@keyframes tp-node-enter {
+  from { opacity: 0; transform: translateX(-16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.toss-page__node--b {
+  animation-name: tp-node-enter-r;
+}
+
+@keyframes tp-node-enter-r {
+  from { opacity: 0; transform: translateX(16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.toss-page__node-label {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: rgba(194, 214, 133, 0.45);
+}
+
+.toss-page__node-name {
+  font-size: clamp(1rem, 2.5vw, 1.4rem);
+  font-weight: 700;
+  color: var(--tp-green);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  text-shadow: 0 0 12px var(--tp-green-dim);
+  min-height: 1.6em;
+  text-align: center;
+}
+
+.toss-page__node-status {
+  font-size: 0.6rem;
+  color: var(--tp-green);
+  letter-spacing: 0.2em;
+  opacity: 0.7;
+  animation: tp-status-blink 2s steps(1) infinite;
+}
+
+@keyframes tp-status-blink {
+  0%, 79%  { opacity: 0.7; }
+  80%, 100% { opacity: 0.2; }
+}
+
+/* ── Cube wrap (center column) ── */
+.toss-page__cube-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.toss-page__protocol-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: rgba(194, 214, 133, 0.5);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+}
+
+.toss-page__protocol-sub {
+  font-size: 0.6rem;
+  color: rgba(194, 214, 133, 0.35);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  animation: tp-status-blink 1.6s steps(1) infinite;
+}
+
+/* ── Connecting lines between nodes ── */
+.toss-page__connect-line {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    rgba(194, 214, 133, 0.15) 20%,
+    rgba(194, 214, 133, 0.3) 50%,
+    rgba(194, 214, 133, 0.15) 80%,
+    transparent 100%
+  );
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* ── Stream of drifting hex values (ambient) ── */
+.toss-page__hex-stream {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9;
+  font-family: var(--tp-font);
+  font-size: 0.55rem;
+  color: rgba(194, 214, 133, 0.12);
+  letter-spacing: 0.1em;
+  user-select: none;
+  white-space: nowrap;
+  animation: tp-stream-drift var(--stream-duration, 8s) linear infinite;
+  top: var(--stream-top, 10%);
+  left: -120px;
+}
+
+@keyframes tp-stream-drift {
+  from { transform: translateX(0); }
+  to   { transform: translateX(calc(100vw + 240px)); }
+}
+
+/* ── Result screen (post-reveal) ── */
+.toss-page__result {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  text-align: center;
+  padding: 0 2rem;
+  width: 100%;
+}
+
+.toss-page__result--visible {
+  display: flex;
+  animation: tp-result-slam 0.35s cubic-bezier(0.2, 0, 0.3, 1) both;
+}
+
+@keyframes tp-result-slam {
+  0%   { opacity: 0; transform: scale(1.04); filter: brightness(2.5) saturate(0); }
+  30%  { opacity: 1; filter: brightness(1.8) saturate(0.3); }
+  100% { opacity: 1; transform: scale(1); filter: none; }
+}
+
+.toss-page__result-message {
+  font-size: clamp(0.75rem, 2vw, 1rem);
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+}
+
+.toss-page__result--controller .toss-page__result-message {
+  color: var(--tp-green);
+  text-shadow: 0 0 14px var(--tp-green-dim);
+}
+
+.toss-page__result--sabotager .toss-page__result-message {
+  color: var(--tp-red);
+  text-shadow: 0 0 14px var(--tp-red-glow);
+  animation: tp-corrupt-flicker 0.35s steps(1) 4;
+}
+
+@keyframes tp-corrupt-flicker {
+  0%, 100% { opacity: 1; }
+  45%      { opacity: 0.12; }
+  55%      { opacity: 0.8; }
+}
+
+.toss-page__result-role {
+  font-size: clamp(3rem, 10vw, 7rem);
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.toss-page__result--controller .toss-page__result-role {
+  color: var(--tp-green);
+  text-shadow:
+    0 0 30px rgba(194, 214, 133, 0.9),
+    0 0 70px rgba(194, 214, 133, 0.5),
+    0 0 120px rgba(194, 214, 133, 0.2);
+}
+
+.toss-page__result--sabotager .toss-page__result-role {
+  color: var(--tp-red);
+  text-shadow:
+    0 0 30px rgba(114, 52, 53, 0.9),
+    0 0 70px rgba(114, 52, 53, 0.6),
+    0 0 120px rgba(114, 52, 53, 0.3);
+  animation: tp-role-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes tp-role-pulse {
+  0%, 100% {
+    text-shadow:
+      0 0 30px rgba(114, 52, 53, 0.9),
+      0 0 70px rgba(114, 52, 53, 0.6),
+      0 0 120px rgba(114, 52, 53, 0.3);
+  }
+  50% {
+    text-shadow:
+      0 0 50px rgba(114, 52, 53, 1),
+      0 0 100px rgba(114, 52, 53, 0.8),
+      0 0 160px rgba(114, 52, 53, 0.5);
+  }
+}
+
+.toss-page__result-sub {
+  font-size: clamp(0.6rem, 1.5vw, 0.85rem);
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  max-width: 640px;
+}
+
+.toss-page__result--controller .toss-page__result-sub {
+  color: rgba(194, 214, 133, 0.5);
+}
+
+.toss-page__result--sabotager .toss-page__result-sub {
+  color: rgba(114, 52, 53, 0.6);
+}
+
+/* ── Background grid lock (controller state) ── */
+.toss-page--controller-locked .toss-page__scanlines {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0px, transparent 3px,
+    rgba(194, 214, 133, 0.025) 3px, rgba(194, 214, 133, 0.025) 4px
+  );
+  opacity: 0.7;
+}
+
+/* ── Status bar ── */
+.toss-page__status-bar {
+  position: fixed;
+  bottom: 2.5rem;
+  left: 0;
+  right: 0;
+  z-index: 15;
+  text-align: center;
+  animation: tp-fade-up 0.4s ease-out 0.6s both;
+}
+
+@keyframes tp-fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.toss-page__status-text {
+  font-size: clamp(0.7rem, 2vw, 0.9rem);
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--tp-green);
+  text-shadow: 0 0 12px var(--tp-green-dim);
+  transition: color 0.4s, text-shadow 0.4s;
+}
+
+.toss-page__status-text--red {
+  color: var(--tp-red);
+  text-shadow: 0 0 12px var(--tp-red-glow);
+}
+
+.toss-page__cursor {
+  display: inline-block;
+  width: 0.5em;
+  height: 0.9em;
+  background: var(--tp-green);
+  vertical-align: text-bottom;
+  margin-left: 0.2em;
+  animation: tp-blink 1s steps(1) infinite;
+  box-shadow: 0 0 6px var(--tp-green-dim);
+  transition: background 0.4s, box-shadow 0.4s;
+}
+
+.toss-page__cursor--red {
+  background: var(--tp-red);
+  box-shadow: 0 0 6px var(--tp-red-glow);
+}
+
+@keyframes tp-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+/* ── Spinning indicator around cube ── */
+.toss-page__spin-ring {
+  position: absolute;
+  inset: -12px;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  border-top-color: rgba(194, 214, 133, 0.3);
+  border-right-color: rgba(194, 214, 133, 0.1);
+  animation: tp-ring-spin 2s linear infinite;
+  pointer-events: none;
+}
+
+.toss-page__spin-ring--fast {
+  animation-duration: 0.5s;
+}
+
+.toss-page__cube-wrap-inner {
+  position: relative;
+  display: inline-flex;
+}
+
+@keyframes tp-ring-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .toss-page__header {
+    top: 1rem;
+    left: 1rem;
+  }
+
+  .toss-page__arena {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .toss-page__node {
+    flex-direction: row;
+    gap: 1rem;
+    padding: 0.9rem 1.2rem;
+    width: 90vw;
+    justify-content: space-between;
+  }
+
+  .toss-page__node-status {
+    display: none;
+  }
+
+  .toss-page__cube-mount {
+    width: 160px;
+    height: 160px;
+  }
+
+  .toss-page__result-role {
+    font-size: clamp(2.2rem, 12vw, 4rem);
+  }
+
+  .toss-page__cube-mount--result {
+    width: 70px;
+    height: 70px;
+    bottom: 4rem;
+    right: 1rem;
+  }
+}

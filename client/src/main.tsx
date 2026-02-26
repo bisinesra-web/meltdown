@@ -10,6 +10,7 @@ import {
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 import Landing from './pages/landing'
 import Join from './pages/join'
+import TossPage from './pages/game/toss'
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import AdminPage from './pages/admin'
@@ -87,6 +88,11 @@ const gameRoute2 = createRoute({
   path: '/2',
   component: GameRoute2,
 })
+const tossRoute = createRoute({
+  getParentRoute: () => gameLayoutRoute,
+  path: '/toss',
+  component: TossPage,
+})
 
 const routeTree = rootRoute.addChildren([
   indexRoute,
@@ -94,7 +100,7 @@ const routeTree = rootRoute.addChildren([
   joinRoute,
   adminRoute,
   teamChooseRoute,
-  gameLayoutRoute.addChildren([gameRoute1, waitingRoomRoute, gameRoute2]),
+  gameLayoutRoute.addChildren([gameRoute1, waitingRoomRoute, gameRoute2, tossRoute]),
 ])
 
 const router = createRouter({

@@ -1,4 +1,4 @@
-// @ts-nocheck
+/* eslint-disable */
 // @ts-nocheck
 
 import fs from 'fs';

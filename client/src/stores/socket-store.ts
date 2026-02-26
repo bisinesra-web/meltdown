@@ -105,7 +105,19 @@ export const useSocketStore = create<SocketState>(set => ({
       if (data.public) {
         useGameStore.getState().updatePublicState(data.public)
       }
+    })
+    // Subscribe to private_state as well
+    socket.on('game:private_state', (rawData: unknown) => {
+      const result = safeParseSocketMessage(GameStateEventSchema, rawData)
+      if (!result.success) {
+        console.error(
+          '[SocketStore] Validation failed for game:private_state event:',
+          result.error.issues,
+        )
+        return
+      }
 
+      const { data } = result
       if (data.private) {
         useGameStore.getState().updatePrivateState(data.private)
       }

@@ -29,11 +29,11 @@ export const PublicStateSchema = z.object({
   }),
   player1Name: z.string(),
   player2Name: z.string(),
-  coinTossWinner: z.union([z.literal(1), z.literal(2)]).optional(),
+  coinTossWinner: z.literal([1, 2]).optional(),
   player1Ready: z.boolean(),
   player2Ready: z.boolean(),
-  roundWinner: z.union([z.literal(1), z.literal(2), z.literal('draw')]).optional(),
-  gameWinner: z.union([z.literal(1), z.literal(2)]).optional(),
+  roundWinner: z.literal([1, 2, 'draw']).optional(),
+  gameWinner: z.literal([1, 2]).optional(),
 })
 
 export type PublicState = z.infer<typeof PublicStateSchema>
@@ -42,7 +42,7 @@ export type PublicState = z.infer<typeof PublicStateSchema>
  * Schema for private state sent to individual players.
  */
 export const PrivateStateSchema = z.object({
-  playerNumber: z.union([z.literal(1), z.literal(2)]),
+  playerNumber: z.literal([1, 2]),
   cipher: z.string().optional(),
 })
 

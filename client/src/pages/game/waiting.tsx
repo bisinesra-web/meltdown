@@ -66,13 +66,14 @@ export default function WaitingRoom() {
     console.log('[WaitingRoom] Phase changed:', phase)
 
     if (phase === 'GAME_OVER') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTextContent('GAME OVER. RETURNING TO LOBBY...')
       navigate({ to: '/join' }).catch(console.error)
     }
     else if (phase !== 'WAITING_FOR_PLAYERS') {
       setTextContent('EXTERNAL CONNECTION ESTABLISHED!')
       setTimeout(() => {
-        navigate({ to: '/game/1' }).catch(console.error)
+        navigate({ to: '/game/toss' }).catch(console.error)
       }, 1500)
     }
   }, [phase, navigate])
