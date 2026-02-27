@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react'
-import { useGameState } from '../../../hooks/useGameState'
+import { useGameState, gameStateSelectors } from '../../../hooks/useGameState'
 import { submitGuess } from '../../../lib/socket-actions'
+import { ReactorHPBar } from '../../../components/reactor-hp-bar'
+import { useCrtGlitch } from '../../../hooks/useCrtGlitch'
+import '../../game/game-tokens.css'
 
 const PHASE_DURATION_MS = 30_000
 
@@ -9,14 +12,17 @@ function clampToZero(v: number): number {
 }
 
 export default function SubmitGuessPage() {
-  const encryptedCommand = useGameState(s => s.encryptedCommand)
-  const phaseEnteredAt = useGameState(s => s.phaseEnteredAt)
-  const errorMessage = useGameState(s => s.errorMessage)
-  const sabotagerGuess = useGameState(s => s.sabotagerGuess)
+  const encryptedCommand = useGameState(gameStateSelectors.encryptedCommand)
+  const phaseEnteredAt = useGameState(gameStateSelectors.phaseEnteredAt)
+  const errorMessage = useGameState(gameStateSelectors.errorMessage)
+  const sabotagerGuess = useGameState(gameStateSelectors.sabotagerGuess)
+  const plaintextCiphertextPairs = useGameState(gameStateSelectors.plaintextCiphertextPairs)
+  const reactorHP = useGameState(gameStateSelectors.reactorHP)
 
   const [guess, setGuess] = useState('')
   const [status, setStatus] = useState<'idle' | 'submitted'>('idle')
   const [timerSeconds, setTimerSeconds] = useState(30)
+  const isGlitching = useCrtGlitch()
 
   useEffect(() => {
     const startedAt = phaseEnteredAt ? new Date(phaseEnteredAt) : new Date()
@@ -32,7 +38,6 @@ export default function SubmitGuessPage() {
     }
   }, [phaseEnteredAt])
 
-  // Once private sabotagerGuess is set, server has accepted our submission
   useEffect(() => {
     if (sabotagerGuess !== undefined && sabotagerGuess !== null) {
       setStatus('submitted')
@@ -48,62 +53,97 @@ export default function SubmitGuessPage() {
     submitGuess(guess.trim())
   }
 
+  const isSubmitted = status === 'submitted'
+
   return (
-    <div style={{ padding: '20px' }}>
-      <h1>Submit Guess (Sabotager)</h1>
-      <p>
-        Time remaining:
-        {' '}
-        <strong>
-          {timerSeconds}
-          s
-        </strong>
-      </p>
-      <div style={{
-        margin: '12px 0', padding: '12px', background: '#f5f5f5', borderRadius: '4px',
-      }}
-      >
-        <strong>Encrypted command:</strong>
-        {' '}
-        <code style={{ fontSize: '16px' }}>{encryptedCommand ?? '—'}</code>
-      </div>
-      <p>Guess the original command that was encrypted above:</p>
-      {status === 'submitted'
-        ? (
-            <p style={{ color: 'green' }}>
-              ✓ Guess submitted:
-              {' '}
-              <code>{sabotagerGuess}</code>
+    <div className={`game-phase${isGlitching ? ' game-phase--glitching' : ''}`}>
+      <div className='game-phase__entry-overlay' />
+      <div className='game-phase__vignette' />
+      <div className='game-phase__scanlines' />
+
+      <header className='game-phase__header'>
+        <h1 className='game-phase__brand'>MELTDOWN</h1>
+      </header>
+
+      <main className='game-phase__main'>
+        <div className='game-phase__card'>
+          <span className='game-phase__card-corner-tr' />
+          <span className='game-phase__card-corner-bl' />
+
+          <p className='game-phase__title'>Submit Guess</p>
+
+          <ReactorHPBar hp={reactorHP} phaseEnteredAt={phaseEnteredAt} ticking={false} />
+
+          <div style={{ textAlign: 'center' }}>
+            <p className={`game-phase__timer${timerSeconds <= 10 ? ' game-phase__timer--urgent' : ''}`}>
+              {timerSeconds}
             </p>
-          )
-        : (
-            <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              <input
-                disabled={status === 'submitted'}
-                onChange={(e) => {
-                  setGuess(e.target.value)
-                }}
-                placeholder='Component type attribute value'
-                style={{ flex: 1, padding: '8px', fontFamily: 'monospace' }}
-                type='text'
-                value={guess}
-              />
-              <button
-                disabled={!guess.trim() || status === 'submitted'}
-                style={{ padding: '8px 16px' }}
-                type='submit'
-              >
-                Submit Guess
-              </button>
-            </form>
+            <p className='game-phase__timer-label'>seconds remaining</p>
+          </div>
+
+          <div className='game-phase__info-row'>
+            <span className='game-phase__info-label'>Encrypted Command</span>
+            <code className='game-phase__info-value'>{encryptedCommand ?? '—'}</code>
+          </div>
+
+          {plaintextCiphertextPairs && plaintextCiphertextPairs.length > 0 && (
+            <div>
+              <p className='game-phase__subtitle' style={{ marginBottom: '0.5rem' }}>Plaintext / Ciphertext Pairs</p>
+              <table className='game-phase__pairs-table'>
+                <thead>
+                  <tr>
+                    <th>Plaintext</th>
+                    <th>Ciphertext</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {plaintextCiphertextPairs.map((pair, index) => (
+                    <tr key={index}>
+                      <td><code>{pair.plaintext}</code></td>
+                      <td><code>{pair.ciphertext}</code></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
-      {errorMessage && (
-        <p style={{ color: 'red', marginTop: '8px' }}>
-          Error:
-          {' '}
-          {errorMessage}
-        </p>
-      )}
+
+          <p className='game-phase__subtitle'>Guess the original command:</p>
+
+          {isSubmitted
+            ? (
+                <p className='game-phase__success'>
+                  ✓ Guess submitted:&nbsp;
+                  <code>{sabotagerGuess}</code>
+                </p>
+              )
+            : (
+                <form onSubmit={handleSubmit} className='game-phase__input-row'>
+                  <input
+                    className='game-phase__input'
+                    disabled={isSubmitted}
+                    onChange={(e) => {
+                      setGuess(e.target.value)
+                    }}
+                    placeholder='Enter your guess…'
+                    type='text'
+                    value={guess}
+                  />
+                  <button
+                    className='game-phase__btn'
+                    disabled={!guess.trim() || isSubmitted}
+                    type='submit'
+                  >
+                    Submit
+                  </button>
+                </form>
+              )}
+
+          {errorMessage && (
+            <p className='game-phase__error'>{errorMessage}</p>
+          )}
+        </div>
+      </main>
     </div>
   )
 }

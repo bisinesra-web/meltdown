@@ -8,18 +8,18 @@ import { getSocketInstance } from '../stores/socket-store'
 import type { Cipher } from './cipher-validator'
 
 /**
- * PRE_ROUND — controller selects their cipher.
+ * PRE_TURN — controller selects their cipher.
  */
 export function selectCipher(cipher: Cipher): void {
   getSocketInstance().emit('game:select_cipher', cipher)
 }
 
 /**
- * CHALL_CONTROL — controller submits their reactor command.
- * Format: "Component type attribute value"
+ * CHALL_CONTROL — controller selects one of 3 server-generated command options.
+ * The server will restore HP based on the effectiveness tier.
  */
-export function submitCommand(command: string): void {
-  getSocketInstance().emit('game:submit_command', { command })
+export function selectCommand(commandIndex: 0 | 1 | 2): void {
+  getSocketInstance().emit('game:select_command', { commandIndex })
 }
 
 /**
@@ -31,7 +31,7 @@ export function submitGuess(guess: string): void {
 }
 
 /**
- * POST_ROUND — either player signals readiness for the next round.
+ * POST_TURN — either player signals readiness for the next turn.
  */
 export function playerReady(): void {
   getSocketInstance().emit('game:player_ready')

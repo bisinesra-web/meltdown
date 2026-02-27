@@ -1,18 +1,23 @@
-import { useGameState } from '../../../hooks/useGameState'
+import { useGameState, gameStateSelectors } from '../../../hooks/useGameState'
+import '../../game/game-tokens.css'
 
-export default function RoundResultPage() {
-  const phase = useGameState(s => s.phase)
-  const roundWinner = useGameState(s => s.roundWinner)
-  const scores = useGameState(s => s.scores)
-  const player1Name = useGameState(s => s.player1Name)
-  const player2Name = useGameState(s => s.player2Name)
-  const role = useGameState(s => s.role)
-  const roundNumber = useGameState(s => s.roundNumber)
-  const currentLevel = useGameState(s => s.currentLevel)
-  const subRound = useGameState(s => s.subRound)
-  const controller = useGameState(s => s.controller)
+/**
+ * TURN_END: Displays turn victory message and updated scores.
+ * Shown after all subrounds of a turn are complete (either HP <= 0 or all 3 subrounds done).
+ */
+export default function TurnEndPage() {
+  const turnWinner = useGameState(gameStateSelectors.turnWinner)
+  const scores = useGameState(gameStateSelectors.scores)
+  const player1Name = useGameState(gameStateSelectors.player1Name)
+  const player2Name = useGameState(gameStateSelectors.player2Name)
+  const role = useGameState(gameStateSelectors.role)
+  const turnNumber = useGameState(gameStateSelectors.turnNumber)
+  const currentLevel = useGameState(gameStateSelectors.currentLevel)
+  const currentTurn = useGameState(gameStateSelectors.currentTurn)
+  const controller = useGameState(gameStateSelectors.controller)
+  const reactorHP = useGameState(gameStateSelectors.reactorHP)
 
-  const controllerWon = phase === 'ROUND_WIN_CONTROL'
+  const controllerWon = turnWinner === controller
   const playerWon = (controllerWon && role === 'controller') || (!controllerWon && role === 'sabotager')
   const controllerName = controller === 1 ? player1Name : player2Name
 
@@ -29,52 +34,73 @@ export default function RoundResultPage() {
   }
 
   return (
-    <div style={{ padding: '20px', textAlign: 'center' }}>
-      <h1 style={{ color: playerWon ? 'green' : 'red' }}>
-        {playerWon ? 'You Win This Round!' : 'You Lose This Round'}
-      </h1>
-      <p>
-        Round
-        {' '}
-        {roundNumber}
-        {' '}
-        — Level
-        {' '}
-        {currentLevel}
-        {' '}
-        Sub-round
-        {' '}
-        {subRound}
-      </p>
-      <p>
-        {controllerWon ? `${controllerName} (controller) successfully defended` : 'Sabotager cracked the command!'}
-      </p>
-      {roundWinner !== undefined && (
-        <p>
-          Winner:
-          {' '}
-          {nameOf(roundWinner as 1 | 2)}
-        </p>
-      )}
-      <div style={{
-        marginTop: '16px', border: '1px solid #ccc', padding: '12px', display: 'inline-block',
-      }}
-      >
-        <h3>Scores</h3>
-        <p>
-          {player1Name}
-          :
-          {' '}
-          {scores.player1}
-        </p>
-        <p>
-          {player2Name}
-          :
-          {' '}
-          {scores.player2}
-        </p>
-      </div>
-      <p style={{ marginTop: '12px', color: '#888' }}>Advancing to post-round…</p>
+    <div className='game-phase'>
+      <div className='game-phase__entry-overlay' />
+      <div className='game-phase__vignette' />
+      <div className='game-phase__scanlines' />
+
+      <header className='game-phase__header'>
+        <h1 className='game-phase__brand'>MELTDOWN</h1>
+      </header>
+
+      <main className='game-phase__main'>
+        <div className='game-phase__card'>
+          <span className='game-phase__card-corner-tr' />
+          <span className='game-phase__card-corner-bl' />
+
+          <p className='game-phase__subtitle' style={{ textAlign: 'center' }}>
+            Turn&nbsp;
+            {turnNumber}
+            &nbsp;— Level&nbsp;
+            {currentLevel}
+            &nbsp;(Turn&nbsp;
+            {currentTurn}
+            /2)
+          </p>
+
+          <p
+            className={`game-phase__title${playerWon ? ' game-phase__title--win' : ' game-phase__title--lose'}`}
+            style={{ textAlign: 'center' }}
+          >
+            {playerWon ? 'You Win This Turn!' : 'You Lose This Turn'}
+          </p>
+
+          <p className='game-phase__subtitle' style={{ textAlign: 'center' }}>
+            {controllerWon
+              ? `${controllerName} (controller) successfully defended the reactor at ${reactorHP} HP`
+              : 'Sabotager destroyed the reactor!'}
+          </p>
+
+          {turnWinner !== undefined && (
+            <p className='game-phase__subtitle' style={{ textAlign: 'center' }}>
+              Turn Winner:&nbsp;
+              <span style={{ color: 'var(--gp-green)' }}>{nameOf(turnWinner as 1 | 2)}</span>
+            </p>
+          )}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+            <p className='game-phase__subtitle' style={{ textAlign: 'center' }}>Scores</p>
+            <div className='game-phase__scores'>
+              <div className='game-phase__score-player'>
+                <span className='game-phase__score-name'>{player1Name}</span>
+                <span className='game-phase__score-value'>{scores.player1}</span>
+              </div>
+              <span className='game-phase__score-vs'>VS</span>
+              <div className='game-phase__score-player'>
+                <span className='game-phase__score-name'>{player2Name}</span>
+                <span className='game-phase__score-value'>{scores.player2}</span>
+              </div>
+            </div>
+          </div>
+
+          <p className='game-phase__subtitle' style={{ textAlign: 'center' }}>
+            Ready for next action
+            <span className='game-phase__waiting-dot' />
+            <span className='game-phase__waiting-dot' />
+            <span className='game-phase__waiting-dot' />
+          </p>
+        </div>
+      </main>
     </div>
   )
 }

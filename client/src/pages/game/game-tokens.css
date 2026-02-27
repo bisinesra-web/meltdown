@@ -1,0 +1,786 @@
+/* ══════════════════════════════════════════════════════════════
+   Shared game-phase design tokens & utilities
+   Scope: .game-phase and all descendants — never leaks global
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Scoped reset ── */
+.game-phase,
+.game-phase *,
+.game-phase *::before,
+.game-phase *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── Design tokens ── */
+.game-phase {
+  --gp-red:          #723435;
+  --gp-red-dim:      rgba(114, 52, 53, 0.45);
+  --gp-red-glow:     rgba(114, 52, 53, 0.8);
+  --gp-green:        #C2D685;
+  --gp-green-dim:    rgba(194, 214, 133, 0.45);
+  --gp-green-glow:   rgba(194, 214, 133, 0.15);
+  --gp-dark-green:   #535C39;
+  --gp-black:        #0a0a0a;
+  --gp-card-bg:      rgba(10, 10, 10, 0.88);
+  --gp-border:       rgba(194, 214, 133, 0.25);
+  --gp-border-hover: rgba(194, 214, 133, 0.55);
+  --gp-corner:       #C2D685;
+  --gp-danger:       #ef4444;
+  --gp-warn:         #eab308;
+  --gp-font:         "JetBrains Mono Variable", "Courier New", monospace;
+
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background-color: transparent;
+  z-index: 1;
+  font-family: var(--gp-font);
+  color: var(--gp-green);
+}
+
+/* ── Entry overlay — opaque black that fades out on mount ── */
+.game-phase__entry-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: #000;
+  pointer-events: none;
+  animation: gp-overlay-out 0.35s ease-out 0.05s both;
+}
+
+@keyframes gp-overlay-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+/* ── Vignette ── */
+.game-phase__vignette {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 0%,
+    transparent 30%,
+    rgba(0, 0, 0, 0.45) 55%,
+    rgba(0, 0, 0, 0.9) 100%
+  );
+}
+
+/* ── CRT scanline overlay ── */
+.game-phase__scanlines {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent,
+    transparent 3px,
+    rgba(0, 0, 0, 0.06) 3px,
+    rgba(0, 0, 0, 0.06) 4px
+  );
+}
+
+/* ── MELTDOWN header ── */
+.game-phase__header {
+  position: fixed;
+  top: 2rem;
+  left: 2rem;
+  z-index: 15;
+  animation: gp-fade-down 0.4s ease-out 0.28s both;
+}
+
+.game-phase__brand {
+  font-family: var(--gp-font);
+  font-size: clamp(1.6rem, 4vw, 2.5rem);
+  font-weight: 900;
+  color: var(--gp-red);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  text-shadow:
+    0 0 20px rgba(114, 52, 53, 0.8),
+    0 0 40px rgba(114, 52, 53, 0.5),
+    0 0 60px rgba(114, 52, 53, 0.3);
+}
+
+@keyframes gp-fade-down {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Main centred layout ── */
+.game-phase__main {
+  position: relative;
+  z-index: 11;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 5rem 1.5rem 2rem;
+}
+
+/* ── Card / panel ── */
+.game-phase__card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 2.5rem 3rem;
+  background: var(--gp-card-bg);
+  border: 1px solid var(--gp-border);
+  backdrop-filter: blur(4px);
+  width: clamp(300px, 90vw, 780px);
+  animation: gp-card-enter 0.5s cubic-bezier(0.2, 0.8, 0.3, 1) 0.38s both;
+}
+
+@keyframes gp-card-enter {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Corner decorations on cards ── */
+.game-phase__card::before,
+.game-phase__card::after {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-color: var(--gp-corner);
+  border-style: solid;
+}
+.game-phase__card::before {
+  top: -1px;
+  left: -1px;
+  border-width: 2px 0 0 2px;
+}
+.game-phase__card::after {
+  bottom: -1px;
+  right: -1px;
+  border-width: 0 2px 2px 0;
+}
+
+/* Inner corner pair that CSS pseudo-elements can't do alone */
+.game-phase__card-corner-tr {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 14px;
+  height: 14px;
+  border-top: 2px solid var(--gp-corner);
+  border-right: 2px solid var(--gp-corner);
+}
+.game-phase__card-corner-bl {
+  position: absolute;
+  bottom: -1px;
+  left: -1px;
+  width: 14px;
+  height: 14px;
+  border-bottom: 2px solid var(--gp-corner);
+  border-left: 2px solid var(--gp-corner);
+}
+
+/* ── Page title ── */
+.game-phase__title {
+  font-family: var(--gp-font);
+  font-size: clamp(1.1rem, 3vw, 1.6rem);
+  font-weight: 700;
+  color: var(--gp-green);
+  text-transform: uppercase;
+  letter-spacing: 0.25em;
+  text-shadow:
+    0 0 16px rgba(194, 214, 133, 0.7),
+    0 0 32px rgba(194, 214, 133, 0.4);
+}
+
+/* ── Subtitle / meta line ── */
+.game-phase__subtitle {
+  font-family: var(--gp-font);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: rgba(194, 214, 133, 0.45);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+/* ── Info row (label + value) ── */
+.game-phase__info-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.9rem 1rem;
+  background: rgba(194, 214, 133, 0.04);
+  border: 1px solid var(--gp-border);
+}
+
+.game-phase__info-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: rgba(194, 214, 133, 0.5);
+}
+
+.game-phase__info-value {
+  font-family: var(--gp-font);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--gp-green);
+  word-break: break-all;
+  text-shadow: 0 0 8px var(--gp-green-glow);
+}
+
+/* ── Code / command display ── */
+.game-phase__code {
+  font-family: var(--gp-font);
+  font-size: 0.9rem;
+  color: var(--gp-green);
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--gp-border);
+  padding: 0.75rem 1rem;
+  word-break: break-all;
+  letter-spacing: 0.08em;
+}
+
+/* ── Timer ── */
+.game-phase__timer {
+  font-family: var(--gp-font);
+  font-size: clamp(2.5rem, 6vw, 4rem);
+  font-weight: 900;
+  color: var(--gp-green);
+  letter-spacing: 0.1em;
+  text-align: center;
+  text-shadow:
+    0 0 20px rgba(194, 214, 133, 0.6),
+    0 0 40px rgba(194, 214, 133, 0.3);
+  transition: color 0.5s ease, text-shadow 0.5s ease;
+}
+
+.game-phase__timer--urgent {
+  color: var(--gp-danger);
+  text-shadow:
+    0 0 20px rgba(239, 68, 68, 0.7),
+    0 0 40px rgba(239, 68, 68, 0.4);
+  animation: gp-timer-pulse 0.6s steps(1) infinite;
+}
+
+@keyframes gp-timer-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.55; }
+}
+
+.game-phase__timer-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: rgba(194, 214, 133, 0.45);
+  text-align: center;
+  margin-top: -0.5rem;
+}
+
+/* ── Primary action button ── */
+.game-phase__btn {
+  font-family: var(--gp-font);
+  font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  padding: 0.9rem 3rem;
+  background-color: transparent;
+  border: 2px solid var(--gp-green);
+  color: var(--gp-green);
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.game-phase__btn:hover:not(:disabled) {
+  background-color: var(--gp-green);
+  color: var(--gp-black);
+  box-shadow: 0 0 28px rgba(194, 214, 133, 0.6), 0 0 8px rgba(194, 214, 133, 0.3) inset;
+}
+
+.game-phase__btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.game-phase__btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  border-color: rgba(194, 214, 133, 0.3);
+  color: rgba(194, 214, 133, 0.3);
+}
+
+.game-phase__btn--ready {
+  border-color: var(--gp-dark-green);
+  color: var(--gp-dark-green);
+  opacity: 0.7;
+  cursor: default;
+}
+
+.game-phase__btn--danger {
+  border-color: var(--gp-red);
+  color: var(--gp-red);
+}
+
+.game-phase__btn--danger:hover:not(:disabled) {
+  background-color: var(--gp-red);
+  color: #fff;
+  box-shadow: 0 0 28px rgba(114, 52, 53, 0.6);
+}
+
+/* ── Error message ── */
+.game-phase__error {
+  font-family: var(--gp-font);
+  font-size: clamp(0.72rem, 2vw, 0.85rem);
+  font-weight: 700;
+  color: var(--gp-red);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  text-align: center;
+  text-shadow:
+    0 0 10px rgba(114, 52, 53, 0.9),
+    0 0 22px rgba(114, 52, 53, 0.5);
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(114, 52, 53, 0.5);
+  animation: gp-error-flicker 0.4s steps(1) 2;
+}
+
+@keyframes gp-error-flicker {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.15; }
+}
+
+/* ── Success banner ── */
+.game-phase__success {
+  font-family: var(--gp-font);
+  font-size: clamp(0.8rem, 2vw, 0.95rem);
+  font-weight: 700;
+  color: var(--gp-green);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  text-align: center;
+  padding: 0.85rem 1.5rem;
+  border: 1px solid var(--gp-green);
+  background: rgba(194, 214, 133, 0.07);
+  text-shadow: 0 0 12px rgba(194, 214, 133, 0.6);
+  animation: gp-success-enter 0.3s ease-out both;
+}
+
+@keyframes gp-success-enter {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Waiting pulse ── */
+.game-phase__waiting-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: var(--gp-green);
+  border-radius: 50%;
+  margin: 0 3px;
+}
+
+.game-phase__waiting-dot:nth-child(1) { animation: gp-dot-blink 1.2s 0.0s infinite; }
+.game-phase__waiting-dot:nth-child(2) { animation: gp-dot-blink 1.2s 0.4s infinite; }
+.game-phase__waiting-dot:nth-child(3) { animation: gp-dot-blink 1.2s 0.8s infinite; }
+
+@keyframes gp-dot-blink {
+  0%, 80%, 100% { opacity: 0.2; transform: scale(0.85); }
+  40%            { opacity: 1;   transform: scale(1.15); box-shadow: 0 0 6px rgba(194, 214, 133, 0.8); }
+}
+
+/* ── Cursor blink ── */
+.game-phase__cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  background: var(--gp-green);
+  margin-left: 2px;
+  vertical-align: middle;
+  animation: gp-blink 1s steps(1) infinite;
+}
+
+@keyframes gp-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+/* ── CRT glitch (applied via .game-phase--glitching) ── */
+.game-phase--glitching {
+  animation: gp-glitch 0.25s steps(1) forwards;
+}
+
+@keyframes gp-glitch {
+  0%   { filter: none; transform: none; }
+  15%  { filter: brightness(2.5) saturate(0); transform: skewX(-1.5deg) translateX(2px); }
+  30%  { filter: none; transform: none; }
+  50%  { filter: brightness(1.8) hue-rotate(60deg); transform: skewX(1deg) translateX(-2px); }
+  65%  { filter: none; transform: none; }
+  80%  { filter: brightness(2) saturate(0); transform: skewX(-0.8deg); }
+  100% { filter: none; transform: none; }
+}
+
+/* ── Score / stats box ── */
+.game-phase__scores {
+  display: flex;
+  gap: 2.5rem;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.game-phase__score-player {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.game-phase__score-name {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: rgba(194, 214, 133, 0.6);
+}
+
+.game-phase__score-value {
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 900;
+  color: var(--gp-green);
+  text-shadow: 0 0 16px rgba(194, 214, 133, 0.5);
+}
+
+.game-phase__score-ready {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--gp-dark-green);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  text-shadow: 0 0 8px rgba(83, 92, 57, 0.7);
+}
+
+.game-phase__score-vs {
+  font-size: clamp(1.2rem, 3vw, 1.8rem);
+  font-weight: 900;
+  color: rgba(194, 214, 133, 0.2);
+  align-self: center;
+}
+
+/* ── Resolution table ── */
+.game-phase__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--gp-font);
+  font-size: 0.85rem;
+}
+
+.game-phase__table td {
+  padding: 0.7rem 0.9rem;
+  border-bottom: 1px solid var(--gp-border);
+  vertical-align: top;
+}
+
+.game-phase__table td:first-child {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: rgba(194, 214, 133, 0.5);
+  white-space: nowrap;
+  width: 40%;
+}
+
+.game-phase__table td:last-child {
+  color: var(--gp-green);
+  font-family: var(--gp-font);
+  word-break: break-all;
+}
+
+.game-phase__table tr:last-child td {
+  border-bottom: none;
+}
+
+/* ── Outcome badge (used in resolution table) ── */
+.game-phase__outcome--damage {
+  color: var(--gp-danger) !important;
+  text-shadow: 0 0 10px rgba(239, 68, 68, 0.6);
+}
+
+.game-phase__outcome--safe {
+  color: var(--gp-dark-green) !important;
+  text-shadow: 0 0 8px rgba(83, 92, 57, 0.6);
+}
+
+.game-phase__outcome--match {
+  color: var(--gp-warn) !important;
+  text-shadow: 0 0 10px rgba(234, 179, 8, 0.6);
+}
+
+/* ── HP transition display ── */
+.game-phase__hp-transition {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  border: 1px solid var(--gp-border);
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.game-phase__hp-value {
+  font-size: clamp(1.5rem, 4vw, 2.2rem);
+  font-weight: 900;
+}
+
+.game-phase__hp-arrow {
+  font-size: 1.2rem;
+  color: rgba(194, 214, 133, 0.3);
+}
+
+.game-phase__hp-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: rgba(194, 214, 133, 0.45);
+  text-align: center;
+}
+
+/* ── Turn-ending banner ── */
+.game-phase__turn-banner {
+  width: 100%;
+  padding: 1rem 1.5rem;
+  text-align: center;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  border: 1px solid;
+  animation: gp-banner-enter 0.4s ease-out both;
+}
+
+@keyframes gp-banner-enter {
+  from { opacity: 0; transform: scaleX(0.9); }
+  to   { opacity: 1; transform: scaleX(1); }
+}
+
+.game-phase__turn-banner--sabotager-wins {
+  color: var(--gp-danger);
+  border-color: rgba(239, 68, 68, 0.5);
+  background: rgba(239, 68, 68, 0.08);
+  text-shadow: 0 0 16px rgba(239, 68, 68, 0.7);
+}
+
+.game-phase__turn-banner--controller-wins {
+  color: var(--gp-green);
+  border-color: rgba(194, 214, 133, 0.4);
+  background: rgba(194, 214, 133, 0.06);
+  text-shadow: 0 0 16px rgba(194, 214, 133, 0.6);
+}
+
+.game-phase__turn-banner--continuing {
+  color: rgba(194, 214, 133, 0.5);
+  border-color: rgba(194, 214, 133, 0.2);
+}
+
+/* ── Game-over title variants ── */
+.game-phase__title--win {
+  color: var(--gp-green);
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  text-shadow:
+    0 0 20px rgba(194, 214, 133, 0.8),
+    0 0 50px rgba(194, 214, 133, 0.5);
+  animation: gp-win-enter 0.6s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+
+.game-phase__title--lose {
+  color: var(--gp-red);
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  text-shadow:
+    0 0 20px rgba(114, 52, 53, 0.8),
+    0 0 50px rgba(114, 52, 53, 0.5);
+  animation: gp-lose-enter 0.6s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+
+@keyframes gp-win-enter {
+  from { opacity: 0; transform: scale(0.85); filter: brightness(3); }
+  to   { opacity: 1; transform: scale(1);    filter: brightness(1); }
+}
+
+@keyframes gp-lose-enter {
+  from { opacity: 0; transform: scale(1.1); filter: brightness(3) saturate(0); }
+  to   { opacity: 1; transform: scale(1);   filter: brightness(1) saturate(1); }
+}
+
+/* ── Pairs table (sabotager learning table) ── */
+.game-phase__pairs-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--gp-font);
+  font-size: 0.82rem;
+}
+
+.game-phase__pairs-table th {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid rgba(194, 214, 133, 0.4);
+  text-align: left;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: rgba(194, 214, 133, 0.55);
+}
+
+.game-phase__pairs-table td {
+  padding: 0.45rem 0.75rem;
+  border-bottom: 1px solid rgba(194, 214, 133, 0.1);
+  color: var(--gp-green);
+  word-break: break-all;
+}
+
+.game-phase__pairs-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* ── Guess input ── */
+.game-phase__input {
+  flex: 1;
+  font-family: var(--gp-font);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--gp-green);
+  background: rgba(0, 0, 0, 0.6);
+  border: 2px solid var(--gp-border);
+  padding: 0.8rem 1rem;
+  outline: none;
+  letter-spacing: 0.08em;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  min-width: 0;
+}
+
+.game-phase__input::placeholder {
+  color: rgba(194, 214, 133, 0.25);
+  letter-spacing: 0.05em;
+}
+
+.game-phase__input:focus {
+  border-color: rgba(194, 214, 133, 0.6);
+  box-shadow: 0 0 16px rgba(194, 214, 133, 0.15);
+}
+
+.game-phase__input:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── Input row (input + submit) ── */
+.game-phase__input-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: stretch;
+  flex-wrap: wrap;
+}
+
+/* ── Command option card ── */
+.game-phase__command-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--gp-border);
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+  text-align: left;
+  width: 100%;
+  font-family: var(--gp-font);
+  color: var(--gp-green);
+}
+
+.game-phase__command-option:hover {
+  border-color: var(--gp-border-hover);
+  background: rgba(194, 214, 133, 0.05);
+  box-shadow: 0 0 18px rgba(194, 214, 133, 0.1);
+}
+
+.game-phase__command-option:active {
+  transform: scale(0.99);
+}
+
+.game-phase__command-text {
+  font-size: 0.88rem;
+  font-weight: 700;
+  word-break: break-all;
+  flex: 1;
+  letter-spacing: 0.04em;
+}
+
+.game-phase__command-effectiveness {
+  font-size: 0.8rem;
+  font-weight: 900;
+  color: var(--gp-dark-green);
+  white-space: nowrap;
+  letter-spacing: 0.1em;
+  text-shadow: 0 0 8px rgba(83, 92, 57, 0.7);
+  margin-left: 1rem;
+}
+
+/* ── Player name pair (all-connected) ── */
+.game-phase__players {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.game-phase__player-name {
+  font-size: clamp(0.9rem, 2.5vw, 1.3rem);
+  font-weight: 700;
+  color: var(--gp-green);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  text-shadow: 0 0 12px rgba(194, 214, 133, 0.5);
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--gp-border);
+  animation: gp-card-enter 0.5s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+
+.game-phase__player-vs {
+  font-size: 1rem;
+  font-weight: 900;
+  color: rgba(194, 214, 133, 0.2);
+  letter-spacing: 0.3em;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .game-phase__header {
+    top: 1rem;
+    left: 1rem;
+  }
+
+  .game-phase__card {
+    padding: 1.75rem 1.25rem;
+    width: calc(100vw - 2rem);
+  }
+
+  .game-phase__main {
+    padding: 4rem 1rem 1.5rem;
+  }
+
+  .game-phase__scores {
+    gap: 1.5rem;
+  }
+}

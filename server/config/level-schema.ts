@@ -23,6 +23,9 @@ export function loadLevelConfig(level: number): LevelConfig | undefined {
   // Import levels dynamically
   // For now, we'll use a hardcoded configuration
   // In production, you'd read from levels.json
+  //
+  // Mapping: old levels 1, 3, 5 → new levels 1, 2, 3
+  // This provides an easy/medium/hard progression
 
   const configs: LevelConfig[] = [
     {
@@ -35,15 +38,6 @@ export function loadLevelConfig(level: number): LevelConfig | undefined {
     },
     {
       level: 2,
-      maxBlockLimit: 5,
-      acceptedBlocks: [
-        { name: 'swap-word', maxQuantity: 2 },
-        { name: 'shift-number', maxQuantity: 2 },
-        { name: 'substitute-char', maxQuantity: 1 },
-      ],
-    },
-    {
-      level: 3,
       maxBlockLimit: 6,
       acceptedBlocks: [
         { name: 'swap-word', maxQuantity: 2 },
@@ -53,18 +47,7 @@ export function loadLevelConfig(level: number): LevelConfig | undefined {
       ],
     },
     {
-      level: 4,
-      maxBlockLimit: 7,
-      acceptedBlocks: [
-        { name: 'swap-word', maxQuantity: 2 },
-        { name: 'shift-number', maxQuantity: 2 },
-        { name: 'substitute-char', maxQuantity: 2 },
-        { name: 'insert-noise', maxQuantity: 1 },
-        { name: 'rotate-words', maxQuantity: 1 },
-      ],
-    },
-    {
-      level: 5,
+      level: 3,
       maxBlockLimit: 8,
       acceptedBlocks: [
         { name: 'swap-word', maxQuantity: 2 },
@@ -85,5 +68,5 @@ export function loadLevelConfig(level: number): LevelConfig | undefined {
  * Gets the maximum level available
  */
 export function getMaxLevel(): number {
-  return 5
+  return 3
 }

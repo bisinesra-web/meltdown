@@ -10,10 +10,9 @@ import {
   ensureTimersScheduled,
   recordBothPlayersConnected,
   handleCipherSelect,
-  handleSubmitCommand,
+  handleSelectCommand,
   handleSubmitGuess,
   handlePlayerReady,
-  emitStateToRoom,
 } from './state-machine.js'
 
 // Re-export so external consumers (e.g. index.ts) keep working
@@ -201,7 +200,7 @@ export function registerGameHandlers(io: Server): void {
     })
 
     // -----------------------------------------------------------------------
-    // game:select_cipher — controller submits cipher choice during PRE_ROUND
+    // game:select_cipher — controller submits cipher choice during PRE_TURN
     // -----------------------------------------------------------------------
     socket.on('game:select_cipher', (payload: unknown) => {
       handleCipherSelect(io, roomCode, playerNumber, payload).then((result) => {
@@ -215,17 +214,17 @@ export function registerGameHandlers(io: Server): void {
     })
 
     // -----------------------------------------------------------------------
-    // game:submit_command — controller submits command during CHALL_CONTROL
+    // game:select_command — controller selects 1 of 3 commands during CHALL_CONTROL
     // -----------------------------------------------------------------------
-    socket.on('game:submit_command', (payload: unknown) => {
-      const command = (payload as Record<string, unknown>)?.command
-      handleSubmitCommand(io, roomCode, playerNumber, command).then((result) => {
+    socket.on('game:select_command', (payload: unknown) => {
+      const commandIndex = (payload as Record<string, unknown>)?.commandIndex
+      handleSelectCommand(io, roomCode, playerNumber, commandIndex).then((result) => {
         if (!result.success) {
-          socket.emit('game:error', { message: result.error || 'Failed to submit command' })
+          socket.emit('game:error', { message: result.error || 'Failed to select command' })
         }
       }).catch((error: unknown) => {
-        logger.error('Error handling submit_command', { socketId: socket.id, error })
-        socket.emit('game:error', { message: 'Failed to submit command' })
+        logger.error('Error handling select_command', { socketId: socket.id, error })
+        socket.emit('game:error', { message: 'Failed to select command' })
       })
     })
 
@@ -245,7 +244,7 @@ export function registerGameHandlers(io: Server): void {
     })
 
     // -----------------------------------------------------------------------
-    // game:player_ready — either player signals ready during POST_ROUND
+    // game:player_ready — either player signals ready during POST_TURN
     // -----------------------------------------------------------------------
     socket.on('game:player_ready', () => {
       handlePlayerReady(io, roomCode, playerNumber).then((result) => {

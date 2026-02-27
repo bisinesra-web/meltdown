@@ -180,17 +180,3 @@ export function isValidCommandFormat(command: string): boolean {
 
   return true
 }
-
-/**
- * Generates a random reactor command for testing
- */
-export function generateRandomCommand(): string {
-  const components = ['waterpipe', 'valve', 'reactor', 'coolant', 'turbine', 'pump']
-  const types = ['A', 'B', 'C', 'D', 'primary', 'secondary']
-  const attributes = ['pressure', 'temperature', 'flow', 'status', 'level']
-  const values = ['+50', '-20', '+100', '-5', '+75', '0']
-
-  const randomChoice = <T>(array: T[]): T => array[Math.floor(Math.random() * array.length)]
-
-  return `${randomChoice(components)} ${randomChoice(types)} ${randomChoice(attributes)} ${randomChoice(values)}`
-}

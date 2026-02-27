@@ -63,15 +63,6 @@ const LEVEL_CONFIGS: LevelConfig[] = [
   },
   {
     level: 2,
-    maxBlockLimit: 5,
-    acceptedBlocks: [
-      { name: 'swap-word', maxQuantity: 2 },
-      { name: 'shift-number', maxQuantity: 2 },
-      { name: 'substitute-char', maxQuantity: 1 },
-    ],
-  },
-  {
-    level: 3,
     maxBlockLimit: 6,
     acceptedBlocks: [
       { name: 'swap-word', maxQuantity: 2 },
@@ -81,18 +72,7 @@ const LEVEL_CONFIGS: LevelConfig[] = [
     ],
   },
   {
-    level: 4,
-    maxBlockLimit: 7,
-    acceptedBlocks: [
-      { name: 'swap-word', maxQuantity: 2 },
-      { name: 'shift-number', maxQuantity: 2 },
-      { name: 'substitute-char', maxQuantity: 2 },
-      { name: 'insert-noise', maxQuantity: 1 },
-      { name: 'rotate-words', maxQuantity: 1 },
-    ],
-  },
-  {
-    level: 5,
+    level: 3,
     maxBlockLimit: 8,
     acceptedBlocks: [
       { name: 'swap-word', maxQuantity: 2 },

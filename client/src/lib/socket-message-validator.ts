@@ -10,13 +10,12 @@ export const GamePhaseSchema = z.enum([
   'ALL_PLAYERS_CONNECTED',
   'COIN_TOSSING',
   'COIN_TOSSED',
-  'PRE_ROUND',
+  'PRE_TURN',
   'CHALL_CONTROL',
   'CHALL_SABOTAGE',
-  'ROUND_RESOLUTION',
-  'ROUND_WIN_CONTROL',
-  'ROUND_WIN_SABOTAGE',
-  'POST_ROUND',
+  'SUBROUND_RESOLUTION',
+  'TURN_END',
+  'POST_TURN',
   'GAME_OVER',
 ])
 
@@ -29,8 +28,9 @@ export const PublicStateSchema = z.object({
   phase: GamePhaseSchema,
   phaseEnteredAt: z.string(),
   currentLevel: z.number(),
-  subRound: z.enum(['A', 'B']),
-  roundNumber: z.number(),
+  currentTurn: z.union([z.literal(1), z.literal(2)]),
+  currentSubround: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+  turnNumber: z.number(),
   scores: z.object({
     player1: z.number(),
     player2: z.number(),
@@ -42,13 +42,18 @@ export const PublicStateSchema = z.object({
   sabotager: z.union([z.literal(1), z.literal(2)]).optional(),
   player1Ready: z.boolean(),
   player2Ready: z.boolean(),
-  roundWinner: z.union([z.literal(1), z.literal(2), z.literal('draw')]).optional(),
-  gameWinner: z.union([z.literal(1), z.literal(2)]).optional(),
+  turnWinner: z.union([z.literal(1), z.literal(2)]).optional(),
+  gameWinner: z.union([z.literal(1), z.literal(2), z.literal('draw')]).optional(),
   cipherSelected: z.boolean(),
-  recommendedCommand: z.string().optional(),
+  reactorHP: z.number(),
+  commandOptions: z.array(z.string()).optional(),
   encryptedCommand: z.string().optional(),
   controllerCommand: z.string().nullable().optional(),
   sabotagerGuess: z.string().nullable().optional(),
+  plaintextCiphertextPairs: z.array(z.object({
+    plaintext: z.string(),
+    ciphertext: z.string(),
+  })),
 })
 
 export type PublicState = z.infer<typeof PublicStateSchema>
@@ -60,8 +65,16 @@ export const PrivateStateSchema = z.object({
   playerNumber: z.union([z.literal(1), z.literal(2)]),
   role: z.enum(['controller', 'sabotager']).optional(),
   cipher: CipherSchema.optional(),
+  cipherSelected: z.boolean().optional(),
+  commandOptions: z.array(z.string()).optional(),
+  commandEffectiveness: z.array(z.number()).optional(),
+  selectedCommandIndex: z.union([z.literal(0), z.literal(1), z.literal(2), z.null()]).optional(),
   controllerCommand: z.string().nullable().optional(),
   sabotagerGuess: z.string().nullable().optional(),
+  plaintextCiphertextPairs: z.array(z.object({
+    plaintext: z.string(),
+    ciphertext: z.string(),
+  })).optional(),
 })
 
 export type PrivateState = z.infer<typeof PrivateStateSchema>

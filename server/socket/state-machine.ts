@@ -11,7 +11,19 @@ import type {
 import type { Cipher } from './cipher-types.js'
 import { CipherSchema } from './cipher-types.js'
 import { isCipherValid, sanitizeCipher } from './cipher-validator.js'
-import { encrypt, isValidCommandFormat, generateRandomCommand } from './cipher-engine.js'
+import { encrypt, isValidCommandFormat } from './cipher-engine.js'
+import {
+  MAX_LEVELS,
+  PHASE_DURATIONS,
+  EFFECTIVENESS,
+  GUESS_DAMAGE_TIERS,
+  CONTROLLER_FORFEIT_DAMAGE,
+  COMMAND_COMPONENTS,
+  COMMAND_TYPES,
+  COMMAND_ATTRIBUTES,
+  COMMAND_VALUES,
+  SUBROUNDS_PER_TURN,
+} from './game-constants.js'
 
 // ---------------------------------------------------------------------------
 // Timer registry — one pending timer per room at most
@@ -48,8 +60,13 @@ function clearRoomTimer(roomCode: string): void {
 // Role helpers
 // ---------------------------------------------------------------------------
 
-function deriveController(coinTossWinner: 1 | 2, subRound: 'A' | 'B'): 1 | 2 {
-  if (subRound === 'A') {
+/**
+ * Derives the controller for a given turn.
+ * Turn 1: coin-toss winner is the controller.
+ * Turn 2: the other player is the controller.
+ */
+function deriveController(coinTossWinner: 1 | 2, turnIndex: 1 | 2): 1 | 2 {
+  if (turnIndex === 1) {
     return coinTossWinner
   }
 
@@ -57,32 +74,201 @@ function deriveController(coinTossWinner: 1 | 2, subRound: 'A' | 'B'): 1 | 2 {
 }
 
 /**
- * Compares two command strings using parsed 4-component comparison.
- * Each component is compared individually, case-insensitively, after trimming.
+ * Counts how many components (out of 4: component, type, attribute, value)
+ * match between two command strings (case-insensitive).
+ *
+ * Returns 0–4.
  */
-function compareCommands(a: string, b: string): boolean {
+function countMatchingComponents(a: string, b: string): number {
   const partsA = a.trim().split(/\s+/)
   const partsB = b.trim().split(/\s+/)
+
   if (partsA.length !== 4 || partsB.length !== 4) {
-    return false
+    return 0
   }
 
-  return partsA.every((part, index) => part.toLowerCase() === partsB[index].toLowerCase())
+  let matches = 0
+  for (let index = 0; index < 4; index++) {
+    if (partsA[index].toLowerCase() === partsB[index].toLowerCase()) {
+      matches++
+    }
+  }
+
+  return matches
 }
 
-/** Cleared per-round transient fields when entering PRE_ROUND. */
-function freshRoundFields(): Partial<StoredGameState> {
+/**
+ * Counts how many of a command's component/type/attribute
+ * (first 3 parts, not value) appear in the turn history.
+ *
+ * Returns 0–3.
+ */
+function countComponentReuse(command: string, history: string[]): number {
+  const parts = command.trim().split(/\s+/)
+  if (parts.length !== 4) {
+    return 0
+  }
+
+  const [component, type, attribute] = parts
+
+  let reuseCount = 0
+
+  for (const histCmd of history) {
+    const histParts = histCmd.trim().split(/\s+/)
+    if (histParts.length !== 4) {
+      continue
+    }
+
+    const [histComponent, histType, histAttribute] = histParts
+
+    if (component.toLowerCase() === histComponent.toLowerCase()) {
+      reuseCount++
+    }
+
+    if (type.toLowerCase() === histType.toLowerCase()) {
+      reuseCount++
+    }
+
+    if (attribute.toLowerCase() === histAttribute.toLowerCase()) {
+      reuseCount++
+    }
+  }
+
+  return Math.min(reuseCount, 3) // Cap at 3
+}
+
+/**
+ * Maps component reuse count (0–3) to effectiveness value (HP restoration).
+ */
+function mapReuseToEffectiveness(reuseCount: number): number {
+  if (reuseCount === 0) {
+    return EFFECTIVENESS.reuse0
+  }
+
+  if (reuseCount === 1) {
+    return EFFECTIVENESS.reuse1
+  }
+
+  // 2–3 use the same value
+  return EFFECTIVENESS.reuse2to3
+}
+
+/** Cleared per-subround transient fields. */
+function freshSubroundFields(): Partial<StoredGameState> {
   return {
-    controllerCipher: undefined,
-    cipherSelected: false,
-    recommendedCommand: undefined,
+    commandOptions: undefined,
+    commandEffectiveness: undefined,
+    selectedCommandIndex: undefined,
     controllerCommand: undefined,
     encryptedCommand: undefined,
     sabotagerGuess: undefined,
-    roundWinner: undefined,
-    player1Ready: false,
-    player2Ready: false,
   }
+}
+
+/** Cleared per-turn transient fields; resets HP and turn-wide history. */
+function freshTurnFields(): Partial<StoredGameState> {
+  return {
+    ...freshSubroundFields(),
+    controllerCipher: undefined,
+    cipherSelected: false,
+    reactorHP: 100,
+    turnCommandHistory: [],
+    plaintextCiphertextPairs: [],
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Command generation
+// ---------------------------------------------------------------------------
+
+/**
+ * Generates a random command (plaintext).
+ */
+function generateRandomCommand(): string {
+  const randomChoice = <T>(array: T[]): T => array[Math.floor(Math.random() * array.length)]
+  return `${randomChoice(COMMAND_COMPONENTS)} ${randomChoice(COMMAND_TYPES)} ${randomChoice(COMMAND_ATTRIBUTES)} ${randomChoice(COMMAND_VALUES)}`
+}
+
+/**
+ * Generates 3 distinct command options, ensuring they differ in
+ * at least one component/type/attribute (for strategic variety).
+ *
+ * Effectiveness is based on how many encrypted tokens of the candidate command
+ * (component / type / attribute — first 3 parts of the ciphertext) appear in
+ * the ciphertexts the sabotager has already seen this turn. More overlap means
+ * the sabotager has more context to guess, so the controller earns more HP for
+ * taking that risk.
+ *
+ * Returns both the options and the effectiveness value for each.
+ */
+function generateCommandOptions(
+  cipher: Cipher | undefined,
+  previousCiphertexts: string[],
+): { options: string[], effectiveness: number[] } {
+  const cipherToUse: Cipher = cipher ?? { level: 1, blocks: [] }
+  const options: string[] = []
+  const effectiveness: number[] = []
+
+  // Generate 3 commands, striving for variety in component/type/attribute
+  let attempts = 0
+  const maxAttempts = 100
+
+  while (options.length < 3 && attempts < maxAttempts) {
+    const cmd = generateRandomCommand()
+
+    // Check if already in options
+    if (options.includes(cmd)) {
+      attempts++
+      continue
+    }
+
+    // If we have 0–2 commands, check for variety in component/type/attribute
+    if (options.length > 0) {
+      const newParts = cmd.trim().split(/\s+/).slice(0, 3) // Component, type, attribute
+      let isDifferent = false
+
+      for (const existingCmd of options) {
+        const existingParts = existingCmd.trim().split(/\s+/).slice(0, 3)
+        // Check if at least one part differs
+        if (
+          newParts[0] !== existingParts[0]
+          || newParts[1] !== existingParts[1]
+          || newParts[2] !== existingParts[2]
+        ) {
+          isDifferent = true
+          break
+        }
+      }
+
+      if (!isDifferent) {
+        attempts++
+        continue
+      }
+    }
+
+    // Add this command
+    options.push(cmd)
+
+    // Compute effectiveness: encrypt the command, then count how many of the
+    // resulting ciphertext tokens (first 3 parts) appear in previously seen
+    // ciphertexts. Higher overlap → sabotager has more context → bigger HP reward.
+    const encResult = encrypt(cmd, cipherToUse)
+    const encryptedCmd = encResult.success ? encResult.result : cmd
+    const reuseCount = countComponentReuse(encryptedCmd, previousCiphertexts)
+    effectiveness.push(mapReuseToEffectiveness(reuseCount))
+  }
+
+  // Fallback: if we didn't generate 3 distinct, pad with any random
+  while (options.length < 3) {
+    const cmd = generateRandomCommand()
+    options.push(cmd)
+    const encResult = encrypt(cmd, cipherToUse)
+    const encryptedCmd = encResult.success ? encResult.result : cmd
+    const reuseCount = countComponentReuse(encryptedCmd, previousCiphertexts)
+    effectiveness.push(mapReuseToEffectiveness(reuseCount))
+  }
+
+  return { options, effectiveness }
 }
 
 // ---------------------------------------------------------------------------
@@ -94,10 +280,14 @@ export function createInitialState(): StoredGameState {
     phase: 'WAITING_FOR_PLAYERS',
     phaseEnteredAt: nowIso(),
     currentLevel: 1,
-    subRound: 'A',
-    roundNumber: 1,
+    currentTurn: 1,
+    currentSubround: 1,
+    turnNumber: 1,
     scores: { player1: 0, player2: 0 },
     cipherSelected: false,
+    reactorHP: 100,
+    turnCommandHistory: [],
+    plaintextCiphertextPairs: [],
     player1Ready: false,
     player2Ready: false,
   }
@@ -111,11 +301,11 @@ export function buildPublicState(
   stored: StoredGameState,
   room: { player_1_name: string, player_2_name: string },
 ): PublicState {
-  const revealRound = (
-    stored.phase === 'ROUND_RESOLUTION'
-    || stored.phase === 'ROUND_WIN_CONTROL'
-    || stored.phase === 'ROUND_WIN_SABOTAGE'
-    || stored.phase === 'POST_ROUND'
+  // Reveal command/guess after SUBROUND_RESOLUTION
+  const revealOutcome = (
+    stored.phase === 'SUBROUND_RESOLUTION'
+    || stored.phase === 'TURN_END'
+    || stored.phase === 'POST_TURN'
     || stored.phase === 'GAME_OVER'
   )
 
@@ -123,8 +313,9 @@ export function buildPublicState(
     phase: stored.phase,
     phaseEnteredAt: stored.phaseEnteredAt,
     currentLevel: stored.currentLevel,
-    subRound: stored.subRound,
-    roundNumber: stored.roundNumber,
+    currentTurn: stored.currentTurn,
+    currentSubround: stored.currentSubround,
+    turnNumber: stored.turnNumber,
     scores: stored.scores,
     player1Name: room.player_1_name,
     player2Name: room.player_2_name,
@@ -133,13 +324,15 @@ export function buildPublicState(
     sabotager: stored.sabotager,
     player1Ready: stored.player1Ready,
     player2Ready: stored.player2Ready,
-    roundWinner: stored.roundWinner,
+    turnWinner: stored.turnWinner,
     gameWinner: stored.gameWinner,
     cipherSelected: stored.cipherSelected,
-    recommendedCommand: stored.recommendedCommand,
+    reactorHP: stored.reactorHP,
+    commandOptions: stored.commandOptions,
     encryptedCommand: stored.encryptedCommand,
-    controllerCommand: revealRound ? stored.controllerCommand : undefined,
-    sabotagerGuess: revealRound ? stored.sabotagerGuess : undefined,
+    controllerCommand: revealOutcome ? stored.controllerCommand : undefined,
+    sabotagerGuess: revealOutcome ? stored.sabotagerGuess : undefined,
+    plaintextCiphertextPairs: stored.plaintextCiphertextPairs,
   }
 }
 
@@ -147,27 +340,33 @@ export function buildPrivateState(stored: StoredGameState, playerNumber: 1 | 2):
   const role: 'controller' | 'sabotager' | undefined
     = stored.controller === undefined
       ? undefined
-      : (stored.controller === playerNumber ? 'controller' : 'sabotager')
+      : (stored.controller === playerNumber
+          ? 'controller'
+          : 'sabotager')
 
   const isController = role === 'controller'
   const isSabotager = role === 'sabotager'
 
-  const revealRound = (
-    stored.phase === 'ROUND_RESOLUTION'
-    || stored.phase === 'ROUND_WIN_CONTROL'
-    || stored.phase === 'ROUND_WIN_SABOTAGE'
-    || stored.phase === 'POST_ROUND'
+  const revealOutcome = (
+    stored.phase === 'SUBROUND_RESOLUTION'
+    || stored.phase === 'TURN_END'
+    || stored.phase === 'POST_TURN'
     || stored.phase === 'GAME_OVER'
   )
 
   return {
     playerNumber,
     role,
+    // Controller-only
     cipher: isController ? stored.controllerCipher : undefined,
-    controllerCommand:
-      isController && !revealRound ? stored.controllerCommand : undefined,
-    sabotagerGuess:
-      isSabotager && !revealRound ? stored.sabotagerGuess : undefined,
+    cipherSelected: isController ? stored.cipherSelected : undefined,
+    commandOptions: isController ? stored.commandOptions : undefined,
+    commandEffectiveness: isController ? stored.commandEffectiveness : undefined,
+    selectedCommandIndex: isController ? stored.selectedCommandIndex : undefined,
+    controllerCommand: isController && !revealOutcome ? stored.controllerCommand : undefined,
+    // Sabotager-only
+    sabotagerGuess: isSabotager && !revealOutcome ? stored.sabotagerGuess : undefined,
+    plaintextCiphertextPairs: isSabotager ? stored.plaintextCiphertextPairs : undefined,
   }
 }
 
@@ -191,8 +390,7 @@ async function persistState(roomCode: string, state: StoredGameState): Promise<v
  * Sends the full current state to every participant of `roomCode`.
  *
  * - Public state is broadcast to the room.
- * - Private state is dispatched individually to each connected socket so that
- *   no player ever receives the other player's sensitive data.
+ * - Private state is dispatched individually to each connected socket.
  */
 export async function emitStateToRoom(io: Server, roomCode: string): Promise<void> {
   const room = await getRoomByCode(roomCode)
@@ -256,7 +454,7 @@ async function transitionTo(
 }
 
 // ---------------------------------------------------------------------------
-// Timer scheduler
+// Timer scheduler — rewritten for turn/subround system
 // ---------------------------------------------------------------------------
 
 export function scheduleNextTimer(io: Server, roomCode: string, state: StoredGameState): void {
@@ -265,12 +463,12 @@ export function scheduleNextTimer(io: Server, roomCode: string, state: StoredGam
   switch (state.phase) {
     // ALL_PLAYERS_CONNECTED → COIN_TOSSING after 5 s
     case 'ALL_PLAYERS_CONNECTED': {
-      const delay = msRemaining(state.phaseEnteredAt, 5000)
+      const delay = msRemaining(state.phaseEnteredAt, PHASE_DURATIONS.ALL_PLAYERS_CONNECTED)
       pendingTimers.set(
         roomCode,
         setTimeout(() => {
           transitionTo(io, roomCode, 'COIN_TOSSING', () => ({
-            coinTossWinner: (Math.random() < 0.5 ? 1 : 2),
+            coinTossWinner: Math.random() < 0.5 ? 1 : 2,
           })).catch((error: unknown) => {
             logger.error('Timer error: ALL_PLAYERS_CONNECTED->COIN_TOSSING', { roomCode, error })
           })
@@ -281,7 +479,7 @@ export function scheduleNextTimer(io: Server, roomCode: string, state: StoredGam
 
     // COIN_TOSSING → COIN_TOSSED after 3 s
     case 'COIN_TOSSING': {
-      const delay = msRemaining(state.phaseEnteredAt, 3000)
+      const delay = msRemaining(state.phaseEnteredAt, PHASE_DURATIONS.COIN_TOSSING)
       pendingTimers.set(
         roomCode,
         setTimeout(() => {
@@ -293,65 +491,83 @@ export function scheduleNextTimer(io: Server, roomCode: string, state: StoredGam
       break
     }
 
-    // COIN_TOSSED → PRE_ROUND after 10 s
+    // COIN_TOSSED → PRE_TURN after 10 s (start turn 1 of level 1)
     case 'COIN_TOSSED': {
-      const delay = msRemaining(state.phaseEnteredAt, 10_000)
+      const delay = msRemaining(state.phaseEnteredAt, PHASE_DURATIONS.COIN_TOSSED)
       pendingTimers.set(
         roomCode,
         setTimeout(() => {
-          transitionTo(io, roomCode, 'PRE_ROUND', (s) => {
+          transitionTo(io, roomCode, 'PRE_TURN', (s) => {
             const ctrlr = s.coinTossWinner
-              ? deriveController(s.coinTossWinner, s.subRound)
+              ? deriveController(s.coinTossWinner, 1) // Turn 1
               : 1
             return {
-              ...freshRoundFields(),
+              ...freshTurnFields(),
+              currentLevel: 1,
+              currentTurn: 1,
+              currentSubround: 1,
+              turnNumber: 1,
               controller: ctrlr,
-              sabotager: (ctrlr === 1 ? 2 : 1),
+              sabotager: ctrlr === 1 ? 2 : 1,
             }
           }).catch((error: unknown) => {
-            logger.error('Timer error: COIN_TOSSED->PRE_ROUND', { roomCode, error })
+            logger.error('Timer error: COIN_TOSSED->PRE_TURN', { roomCode, error })
           })
         }, delay),
       )
       break
     }
 
-    // PRE_ROUND → CHALL_CONTROL after 60 s (empty cipher on timeout)
-    case 'PRE_ROUND': {
-      const delay = msRemaining(state.phaseEnteredAt, 60_000)
+    // PRE_TURN → CHALL_CONTROL after 60 s
+    case 'PRE_TURN': {
+      const delay = msRemaining(state.phaseEnteredAt, PHASE_DURATIONS.PRE_TURN)
       pendingTimers.set(
         roomCode,
         setTimeout(() => {
           transitionTo(io, roomCode, 'CHALL_CONTROL', (s) => {
             const cipher: Cipher = s.controllerCipher ?? { level: s.currentLevel, blocks: [] }
+            const previousCiphertexts = s.plaintextCiphertextPairs.map(p => p.ciphertext)
+            const { options, effectiveness } = generateCommandOptions(cipher, previousCiphertexts)
             return {
               controllerCipher: cipher,
               cipherSelected: s.cipherSelected,
-              recommendedCommand: generateRandomCommand(),
+              commandOptions: options,
+              commandEffectiveness: effectiveness,
             }
           }).catch((error: unknown) => {
-            logger.error('Timer error: PRE_ROUND->CHALL_CONTROL', { roomCode, error })
+            logger.error('Timer error: PRE_TURN->CHALL_CONTROL', { roomCode, error })
           })
         }, delay),
       )
       break
     }
 
-    // CHALL_CONTROL → CHALL_SABOTAGE after 30 s (null command = controller forfeit)
+    // CHALL_CONTROL → CHALL_SABOTAGE after 30 s
     case 'CHALL_CONTROL': {
-      const delay = msRemaining(state.phaseEnteredAt, 30_000)
+      const delay = msRemaining(state.phaseEnteredAt, PHASE_DURATIONS.CHALL_CONTROL)
       pendingTimers.set(
         roomCode,
         setTimeout(() => {
           transitionTo(io, roomCode, 'CHALL_SABOTAGE', (s) => {
+            // If controller didn't select, apply forfeit
             const cmd = s.controllerCommand ?? null
             let encrypted: string | undefined
+            let hpAfterTimeout = s.reactorHP
+
+            // HP ticking: subtract elapsed seconds
+            const elapsedSecs = Math.ceil((Date.now() - new Date(s.phaseEnteredAt).getTime()) / 1000)
+            hpAfterTimeout = Math.max(0, s.reactorHP - elapsedSecs)
+
             if (cmd !== null && s.controllerCipher) {
               const result = encrypt(cmd, s.controllerCipher)
               encrypted = result.success ? result.result : cmd
             }
 
-            return { controllerCommand: cmd, encryptedCommand: encrypted }
+            return {
+              controllerCommand: cmd,
+              encryptedCommand: encrypted,
+              reactorHP: hpAfterTimeout,
+            }
           }).catch((error: unknown) => {
             logger.error('Timer error: CHALL_CONTROL->CHALL_SABOTAGE', { roomCode, error })
           })
@@ -360,106 +576,147 @@ export function scheduleNextTimer(io: Server, roomCode: string, state: StoredGam
       break
     }
 
-    // CHALL_SABOTAGE → ROUND_RESOLUTION after 30 s (null guess = sabotager forfeit)
+    // CHALL_SABOTAGE → SUBROUND_RESOLUTION after 30 s
     case 'CHALL_SABOTAGE': {
-      const delay = msRemaining(state.phaseEnteredAt, 30_000)
+      const delay = msRemaining(state.phaseEnteredAt, PHASE_DURATIONS.CHALL_SABOTAGE)
       pendingTimers.set(
         roomCode,
         setTimeout(() => {
-          transitionTo(io, roomCode, 'ROUND_RESOLUTION', s => ({
+          transitionTo(io, roomCode, 'SUBROUND_RESOLUTION', s => ({
             sabotagerGuess: s.sabotagerGuess ?? null,
           })).catch((error: unknown) => {
-            logger.error('Timer error: CHALL_SABOTAGE->ROUND_RESOLUTION', { roomCode, error })
+            logger.error('Timer error: CHALL_SABOTAGE->SUBROUND_RESOLUTION', { roomCode, error })
           })
         }, delay),
       )
       break
     }
 
-    // ROUND_RESOLUTION → ROUND_WIN_CONTROL or ROUND_WIN_SABOTAGE after 5 s
-    case 'ROUND_RESOLUTION': {
-      const delay = msRemaining(state.phaseEnteredAt, 5000)
+    // SUBROUND_RESOLUTION → CHALL_CONTROL (next subround) or TURN_END (turn wins)
+    case 'SUBROUND_RESOLUTION': {
+      const delay = msRemaining(state.phaseEnteredAt, PHASE_DURATIONS.SUBROUND_RESOLUTION)
       pendingTimers.set(
         roomCode,
         setTimeout(() => {
-          const { controllerCommand, sabotagerGuess, controller, sabotager } = state
-          let sabotageWins = false
+          const {
+            controllerCommand,
+            sabotagerGuess,
+            controller,
+            sabotager,
+            reactorHP,
+            currentSubround,
+          } = state
+
+          // Determine outcome and apply damage
+          let turnWinner: 1 | 2 | undefined
+          let hpAfterDamage = reactorHP
+          const newPairs = [...state.plaintextCiphertextPairs]
+
+          // Record PT/CT pair if command was executed
+          if (controllerCommand !== null && state.encryptedCommand) {
+            newPairs.push({
+              plaintext: controllerCommand,
+              ciphertext: state.encryptedCommand,
+            })
+          }
+
+          // Apply damage based on guess match quality
           if (controllerCommand === null) {
-            sabotageWins = true // Controller forfeited
+            // Controller forfeited: apply forfeit damage
+            hpAfterDamage = Math.max(0, reactorHP - CONTROLLER_FORFEIT_DAMAGE)
+            turnWinner = sabotager
           }
-          else if (
-            sabotagerGuess !== null && sabotagerGuess !== undefined
-            && controllerCommand !== null && controllerCommand !== undefined
-          ) {
-            sabotageWins = compareCommands(controllerCommand, sabotagerGuess)
+          else if (sabotagerGuess !== null) {
+            const matchCount = countMatchingComponents(controllerCommand, sabotagerGuess)
+            if (matchCount === 4) {
+              // Exact match: immediate turn end, sabotager wins
+              hpAfterDamage = 0
+              turnWinner = sabotager
+            }
+            else {
+              // Apply damage based on match count
+              const damage = GUESS_DAMAGE_TIERS[`match${matchCount}` as keyof typeof GUESS_DAMAGE_TIERS]
+              if (damage !== undefined) {
+                hpAfterDamage = Math.max(0, reactorHP - damage)
+              }
+            }
+          }
+          // If sabotagerGuess === null (timeout), no damage applied
+
+          // Determine next phase
+          const shouldEndTurn = hpAfterDamage <= 0 || currentSubround >= SUBROUNDS_PER_TURN
+          const nextPhase: GamePhase = shouldEndTurn ? 'TURN_END' : 'CHALL_CONTROL'
+
+          if (shouldEndTurn && !turnWinner) {
+            // Controller wins if we've used all subrounds and HP > 0
+            turnWinner = controller
           }
 
-          const roundWinner = sabotageWins ? sabotager : controller
-          const nextPhase: GamePhase = sabotageWins ? 'ROUND_WIN_SABOTAGE' : 'ROUND_WIN_CONTROL'
-          transitionTo(io, roomCode, nextPhase, () => ({ roundWinner })).catch((error: unknown) => {
-            logger.error(`Timer error: ROUND_RESOLUTION->${nextPhase}`, { roomCode, error })
+          transitionTo(io, roomCode, nextPhase, (s) => {
+            if (nextPhase === 'TURN_END') {
+              return {
+                reactorHP: hpAfterDamage,
+                turnWinner,
+                plaintextCiphertextPairs: newPairs,
+                sabotagerGuess: undefined,
+              }
+            }
+
+            // Next subround in same turn — generate fresh command options.
+            // Use newPairs (includes the pair just resolved) so the sabotager's
+            // growing ciphertext knowledge is reflected in the effectiveness values.
+            const nextCiphertexts = newPairs.map(p => p.ciphertext)
+            const { options: nextOptions, effectiveness: nextEffectiveness }
+              = generateCommandOptions(s.controllerCipher, nextCiphertexts)
+
+            return {
+              reactorHP: hpAfterDamage,
+              currentSubround: (currentSubround + 1) as 1 | 2 | 3,
+              ...freshSubroundFields(),
+              plaintextCiphertextPairs: newPairs,
+              commandOptions: nextOptions,
+              commandEffectiveness: nextEffectiveness,
+            }
+          }).catch((error: unknown) => {
+            logger.error(`Timer error: SUBROUND_RESOLUTION->${nextPhase}`, { roomCode, error })
           })
         }, delay),
       )
       break
     }
 
-    // ROUND_WIN_CONTROL → POST_ROUND after 10 s (award point to controller)
-    case 'ROUND_WIN_CONTROL': {
-      const delay = msRemaining(state.phaseEnteredAt, 10_000)
+    // TURN_END → POST_TURN after 10 s (award point to turn winner)
+    case 'TURN_END': {
+      const delay = msRemaining(state.phaseEnteredAt, PHASE_DURATIONS.TURN_END)
       pendingTimers.set(
         roomCode,
         setTimeout(() => {
-          transitionTo(io, roomCode, 'POST_ROUND', (s) => {
+          transitionTo(io, roomCode, 'POST_TURN', (s) => {
             const scores = { ...s.scores }
-            if (s.controller === 1) {
+            if (s.turnWinner === 1) {
               scores.player1 += 1
             }
-            else if (s.controller === 2) {
+            else if (s.turnWinner === 2) {
               scores.player2 += 1
             }
 
             return { scores, player1Ready: false, player2Ready: false }
           }).catch((error: unknown) => {
-            logger.error('Timer error: ROUND_WIN_CONTROL->POST_ROUND', { roomCode, error })
+            logger.error('Timer error: TURN_END->POST_TURN', { roomCode, error })
           })
         }, delay),
       )
       break
     }
 
-    // ROUND_WIN_SABOTAGE → POST_ROUND after 10 s (award point to sabotager)
-    case 'ROUND_WIN_SABOTAGE': {
-      const delay = msRemaining(state.phaseEnteredAt, 10_000)
+    // POST_TURN → next PRE_TURN or GAME_OVER after 60 s
+    case 'POST_TURN': {
+      const delay = msRemaining(state.phaseEnteredAt, PHASE_DURATIONS.POST_TURN)
       pendingTimers.set(
         roomCode,
         setTimeout(() => {
-          transitionTo(io, roomCode, 'POST_ROUND', (s) => {
-            const scores = { ...s.scores }
-            if (s.sabotager === 1) {
-              scores.player1 += 1
-            }
-            else if (s.sabotager === 2) {
-              scores.player2 += 1
-            }
-
-            return { scores, player1Ready: false, player2Ready: false }
-          }).catch((error: unknown) => {
-            logger.error('Timer error: ROUND_WIN_SABOTAGE->POST_ROUND', { roomCode, error })
-          })
-        }, delay),
-      )
-      break
-    }
-
-    // POST_ROUND → next PRE_ROUND or GAME_OVER after 60 s
-    case 'POST_ROUND': {
-      const delay = msRemaining(state.phaseEnteredAt, 60_000)
-      pendingTimers.set(
-        roomCode,
-        setTimeout(() => {
-          advanceFromPostRound(io, roomCode).catch((error: unknown) => {
-            logger.error('Timer error: POST_ROUND->next', { roomCode, error })
+          advanceFromPostTurn(io, roomCode).catch((error: unknown) => {
+            logger.error('Timer error: POST_TURN->next', { roomCode, error })
           })
         }, delay),
       )
@@ -474,53 +731,55 @@ export function scheduleNextTimer(io: Server, roomCode: string, state: StoredGam
 }
 
 // ---------------------------------------------------------------------------
-// Post-round progression logic
+// Post-turn progression logic
 // ---------------------------------------------------------------------------
 
-async function advanceFromPostRound(io: Server, roomCode: string): Promise<void> {
+async function advanceFromPostTurn(io: Server, roomCode: string): Promise<void> {
   const room = await getRoomByCode(roomCode)
   if (!room?.room_state) {
     return
   }
 
   const state = JSON.parse(room.room_state) as StoredGameState
-  if (state.phase !== 'POST_ROUND') {
+  if (state.phase !== 'POST_TURN') {
     return
   }
 
-  if (state.subRound === 'A') {
-    // Same level — play sub-round B with roles swapped
-    await transitionTo(io, roomCode, 'PRE_ROUND', (s) => {
-      const ctrlr = s.coinTossWinner
-        ? deriveController(s.coinTossWinner, 'B')
-        : ((s.controller === 1 ? 2 : 1))
-      return {
-        ...freshRoundFields(),
-        subRound: 'B' as const,
-        roundNumber: s.roundNumber + 1,
-        controller: ctrlr,
-        sabotager: (ctrlr === 1 ? 2 : 1),
-      }
-    })
+  // Determine next state based on current level/turn
+  if (state.currentTurn === 1) {
+    // Play turn 2 of same level with roles swapped
+    const ctrlr = state.coinTossWinner
+      ? deriveController(state.coinTossWinner, 2)
+      : (state.controller === 1 ? 2 : 1)
+
+    await transitionTo(io, roomCode, 'PRE_TURN', s => ({
+      ...freshTurnFields(),
+      currentLevel: s.currentLevel,
+      currentTurn: 2,
+      currentSubround: 1,
+      turnNumber: s.turnNumber + 1,
+      controller: ctrlr,
+      sabotager: ctrlr === 1 ? 2 : 1,
+    }))
   }
-  else if (state.currentLevel < 5) {
-    // Advance to next level — sub-round A
-    await transitionTo(io, roomCode, 'PRE_ROUND', (s) => {
-      const ctrlr = s.coinTossWinner
-        ? deriveController(s.coinTossWinner, 'A')
-        : (1 as 1 | 2)
-      return {
-        ...freshRoundFields(),
-        subRound: 'A' as const,
-        currentLevel: s.currentLevel + 1,
-        roundNumber: s.roundNumber + 1,
-        controller: ctrlr,
-        sabotager: (ctrlr === 1 ? 2 : 1),
-      }
-    })
+  else if (state.currentLevel < MAX_LEVELS) {
+    // Advance to next level, turn 1
+    const ctrlr = state.coinTossWinner
+      ? deriveController(state.coinTossWinner, 1)
+      : 1
+
+    await transitionTo(io, roomCode, 'PRE_TURN', s => ({
+      ...freshTurnFields(),
+      currentLevel: s.currentLevel + 1,
+      currentTurn: 1,
+      currentSubround: 1,
+      turnNumber: s.turnNumber + 1,
+      controller: ctrlr,
+      sabotager: ctrlr === 1 ? 2 : 1,
+    }))
   }
   else {
-    // All 5 levels done — game over
+    // All turns done — game over
     await transitionTo(io, roomCode, 'GAME_OVER', (s) => {
       let gameWinner: 1 | 2 | 'draw'
       if (s.scores.player1 > s.scores.player2) {
@@ -581,7 +840,7 @@ export async function recordBothPlayersConnected(
 }
 
 /**
- * Handles `game:select_cipher` — controller only, during PRE_ROUND.
+ * Handles `game:select_cipher` — controller only, during PRE_TURN.
  * Transitions to CHALL_CONTROL on success.
  */
 export async function handleCipherSelect(
@@ -596,8 +855,8 @@ export async function handleCipherSelect(
   }
 
   const state = JSON.parse(room.room_state) as StoredGameState
-  if (state.phase !== 'PRE_ROUND') {
-    return { success: false, error: 'Not in PRE_ROUND phase' }
+  if (state.phase !== 'PRE_TURN') {
+    return { success: false, error: 'Not in PRE_TURN phase' }
   }
 
   if (state.controller !== playerNumber) {
@@ -623,27 +882,39 @@ export async function handleCipherSelect(
   }
 
   logger.info('Cipher selected — transitioning to CHALL_CONTROL', { roomCode, playerNumber })
+
+  // Generate command options before transitioning.
+  // At the start of a turn plaintextCiphertextPairs is empty, so all options
+  // start at baseline effectiveness (no prior ciphertexts seen by sabotager).
+  const previousCiphertexts = state.plaintextCiphertextPairs.map(p => p.ciphertext)
+  const { options, effectiveness } = generateCommandOptions(cipher, previousCiphertexts)
+
   await transitionTo(io, roomCode, 'CHALL_CONTROL', () => ({
     controllerCipher: cipher,
     cipherSelected: true,
-    recommendedCommand: generateRandomCommand(),
+    commandOptions: options,
+    commandEffectiveness: effectiveness,
   }))
 
   return { success: true }
 }
 
 /**
- * Handles `game:submit_command` — controller only, during CHALL_CONTROL.
- * Encrypts the command and transitions to CHALL_SABOTAGE.
+ * Handles `game:select_command` — controller only, during CHALL_CONTROL.
+ * Controller picks one of 3 command options by index (0, 1, 2).
+ * Applies effectiveness bonus to HP, encrypts command, transitions to CHALL_SABOTAGE.
  */
-export async function handleSubmitCommand(
+export async function handleSelectCommand(
   io: Server,
   roomCode: string,
   playerNumber: 1 | 2,
-  command: unknown,
+  commandIndex: unknown,
 ): Promise<{ success: boolean, error?: string }> {
-  if (typeof command !== 'string') {
-    return { success: false, error: 'command must be a string' }
+  if (
+    typeof commandIndex !== 'number'
+    || ![0, 1, 2].includes(commandIndex)
+  ) {
+    return { success: false, error: 'commandIndex must be 0, 1, or 2' }
   }
 
   const room = await getRoomByCode(roomCode)
@@ -657,27 +928,46 @@ export async function handleSubmitCommand(
   }
 
   if (state.controller !== playerNumber) {
-    return { success: false, error: 'Only the controller can submit a command' }
+    return { success: false, error: 'Only the controller can select a command' }
   }
 
-  if (state.controllerCommand !== undefined) {
+  if (state.selectedCommandIndex !== undefined) {
     return { success: true }
   }
 
-  if (!isValidCommandFormat(command)) {
-    return { success: false, error: 'Invalid command format. Expected: "Component type attribute value"' }
+  if (!state.commandOptions || !state.commandEffectiveness) {
+    return { success: false, error: 'Command options not available' }
   }
 
+  const selectedCommand = state.commandOptions[commandIndex]
+  const effectiveness = state.commandEffectiveness[commandIndex]
+
+  if (!selectedCommand || !effectiveness) {
+    return { success: false, error: 'Invalid command index' }
+  }
+
+  // Apply effectiveness bonus to HP
+  const elapsedSecs = Math.ceil((Date.now() - new Date(state.phaseEnteredAt).getTime()) / 1000)
+  let hpAfterChoice = Math.max(0, state.reactorHP - elapsedSecs)
+  hpAfterChoice = Math.min(100, hpAfterChoice + effectiveness)
+
+  // Encrypt the command
   const cipher: Cipher = state.controllerCipher ?? { level: state.currentLevel, blocks: [] }
-  const encResult = encrypt(command, cipher)
-  if (!encResult.success) {
-    return { success: false, error: `Encryption failed: ${encResult.error}` }
-  }
+  const encResult = encrypt(selectedCommand, cipher)
+  const encrypted = encResult.success ? encResult.result : selectedCommand
 
-  logger.info('Controller submitted command — transitioning to CHALL_SABOTAGE', { roomCode, playerNumber })
+  logger.info('Controller selected command — transitioning to CHALL_SABOTAGE', {
+    roomCode,
+    playerNumber,
+    commandIndex,
+  })
+
   await transitionTo(io, roomCode, 'CHALL_SABOTAGE', () => ({
-    controllerCommand: command,
-    encryptedCommand: encResult.result,
+    selectedCommandIndex: commandIndex as 0 | 1 | 2,
+    controllerCommand: selectedCommand,
+    encryptedCommand: encrypted,
+    reactorHP: hpAfterChoice,
+    turnCommandHistory: [...state.turnCommandHistory, selectedCommand],
   }))
 
   return { success: true }
@@ -685,7 +975,7 @@ export async function handleSubmitCommand(
 
 /**
  * Handles `game:submit_guess` — sabotager only, during CHALL_SABOTAGE.
- * Transitions to ROUND_RESOLUTION.
+ * Transitions to SUBROUND_RESOLUTION.
  */
 export async function handleSubmitGuess(
   io: Server,
@@ -719,8 +1009,12 @@ export async function handleSubmitGuess(
     return { success: false, error: 'Invalid guess format. Expected: "Component type attribute value"' }
   }
 
-  logger.info('Sabotager submitted guess — transitioning to ROUND_RESOLUTION', { roomCode, playerNumber })
-  await transitionTo(io, roomCode, 'ROUND_RESOLUTION', () => ({
+  logger.info('Sabotager submitted guess — transitioning to SUBROUND_RESOLUTION', {
+    roomCode,
+    playerNumber,
+  })
+
+  await transitionTo(io, roomCode, 'SUBROUND_RESOLUTION', () => ({
     sabotagerGuess: guess,
   }))
 
@@ -728,7 +1022,7 @@ export async function handleSubmitGuess(
 }
 
 /**
- * Handles `game:player_ready` during POST_ROUND.
+ * Handles `game:player_ready` during POST_TURN.
  * Immediately advances if both players are ready.
  */
 export async function handlePlayerReady(
@@ -742,8 +1036,8 @@ export async function handlePlayerReady(
   }
 
   const state = JSON.parse(room.room_state) as StoredGameState
-  if (state.phase !== 'POST_ROUND') {
-    return { success: false, error: 'Not in POST_ROUND phase' }
+  if (state.phase !== 'POST_TURN') {
+    return { success: false, error: 'Not in POST_TURN phase' }
   }
 
   const alreadyReady = playerNumber === 1 ? state.player1Ready : state.player2Ready
@@ -759,7 +1053,9 @@ export async function handlePlayerReady(
   await persistState(roomCode, updated)
   logger.info('Player ready', { roomCode, playerNumber })
 
-  await (updated.player1Ready && updated.player2Ready ? advanceFromPostRound(io, roomCode) : emitStateToRoom(io, roomCode))
+  await (updated.player1Ready && updated.player2Ready
+    ? advanceFromPostTurn(io, roomCode)
+    : emitStateToRoom(io, roomCode))
 
   return { success: true }
 }

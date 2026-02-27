@@ -8,7 +8,7 @@ import {
   getLevelConfig,
   validateCipherClient,
 } from '../../lib/cipher-validator'
-import { getSocketInstance } from '../../stores/socket-store'
+import { selectCipher } from '../../lib/socket-actions'
 import CipherBlockTile from '../../components/cipher-block-tile'
 import CipherBlockRow, { type CipherDraftBlock } from '../../components/cipher-block-row'
 import './cipher.css'
@@ -36,7 +36,8 @@ function clampToZero(value: number): number {
 export default function CipherPage() {
   const phase = useGameState(s => s.phase)
   const phaseEnteredAt = useGameState(s => s.phaseEnteredAt)
-  const level = useGameState(s => s.level ?? 1)
+  const currentLevel = useGameState(s => s.currentLevel)
+  const cipherSelected = useGameState(s => s.cipherSelected)
   const player1Ready = useGameState(s => s.player1Ready)
   const player2Ready = useGameState(s => s.player2Ready)
   const errorMessage = useGameState(s => s.errorMessage)
@@ -47,7 +48,7 @@ export default function CipherPage() {
   const [submitError, setSubmitError] = useState<string | undefined>()
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'sending' | 'submitted'>('idle')
 
-  const levelConfig = getLevelConfig(level)
+  const levelConfig = getLevelConfig(currentLevel)
   const acceptedBlocks = levelConfig?.acceptedBlocks ?? []
 
   const blockCounts = useMemo(() => {
@@ -103,14 +104,14 @@ export default function CipherPage() {
     }
 
     return validateCipherClient({
-      level,
+      level: currentLevel,
       blocks: draftBlocks.map(block => ({
         type: block.type,
         arg1: block.arg1,
         arg2: block.arg2,
       })),
     })
-  }, [draftBlocks, level, levelConfig])
+  }, [draftBlocks, currentLevel, levelConfig])
 
   const allErrors = useMemo(() => {
     const merged = [...cipherValidation.errors, ...requiredErrors]
@@ -118,11 +119,11 @@ export default function CipherPage() {
   }, [cipherValidation.errors, requiredErrors])
 
   const canSubmit = cipherValidation.valid && requiredErrors.length === 0 && submitStatus !== 'submitted'
-  const canEdit = phase === 'PRE_ROUND' && submitStatus !== 'submitted'
+  const canEdit = phase === 'PRE_TURN' && submitStatus !== 'submitted'
   const isWaitingForOpponent = submitStatus === 'submitted' && !(player1Ready && player2Ready)
 
   useEffect(() => {
-    if (phase !== 'PRE_ROUND') {
+    if (phase !== 'PRE_TURN') {
       setTimerSeconds(0)
       return
     }
@@ -142,26 +143,14 @@ export default function CipherPage() {
     }
   }, [phase, phaseEnteredAt])
 
+  // Mark submitted once server confirms cipher was accepted (via private state)
   useEffect(() => {
-    const socket = getSocketInstance()
-
-    const handleConfirmation = (data: { success: boolean, error?: string }) => {
-      if (data.success) {
-        setSubmitStatus('submitted')
-        setSubmitError(undefined)
-        setErrorMessage(undefined)
-      }
-      else {
-        setSubmitStatus('idle')
-        setSubmitError(data.error ?? 'Invalid cipher configuration.')
-      }
+    if (cipherSelected) {
+      setSubmitStatus('submitted')
+      setSubmitError(undefined)
+      setErrorMessage(undefined)
     }
-
-    socket.on('game:cipher_confirmation', handleConfirmation)
-    return () => {
-      socket.off('game:cipher_confirmation', handleConfirmation)
-    }
-  }, [])
+  }, [cipherSelected, setErrorMessage])
 
   useEffect(() => {
     if (errorMessage) {
@@ -270,16 +259,10 @@ export default function CipherPage() {
       return
     }
 
-    const socket = getSocketInstance()
-    if (!socket.connected) {
-      setSubmitError('Socket offline. Check connection.')
-      return
-    }
-
     setSubmitStatus('sending')
     setSubmitError(undefined)
-    socket.emit('game:select_cipher', {
-      level,
+    selectCipher({
+      level: currentLevel,
       blocks: draftBlocks.map(block => ({
         type: block.type,
         arg1: block.arg1,
@@ -323,7 +306,7 @@ export default function CipherPage() {
                 <h2>AVAILABLE BLOCKS</h2>
                 <p>
                   LEVEL
-                  {String(level)}
+                  {String(currentLevel)}
                   {' '}
                   · LIMIT
                   {String(levelConfig?.maxBlockLimit ?? 0)}
@@ -439,9 +422,9 @@ export default function CipherPage() {
               </button>
 
               <p className='cipher-page__note'>
-                {phase === 'PRE_ROUND'
+                {phase === 'PRE_TURN'
                   ? 'SUBMIT BEFORE TIMER EXPIRES.'
-                  : 'AWAITING PRE-ROUND PHASE.'}
+                  : 'AWAITING PRE-TURN PHASE.'}
               </p>
             </aside>
           </main>

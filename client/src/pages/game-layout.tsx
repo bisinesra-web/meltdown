@@ -1,9 +1,11 @@
 import { useEffect } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { AnimatePresence, motion } from 'motion/react'
 import { useSocketStore } from '../stores/socket-store'
 import { useRoomStore } from '../stores/room-store'
 import { useGameState } from '../hooks/useGameState'
 import type { GamePhase } from '../lib/socket-message-validator'
+import Squares from '../components/scrolling-bg'
 
 // Shared phase views
 import WaitingRoom from './game/waiting'
@@ -39,7 +41,7 @@ function PhaseView({ phase, role }: { phase: GamePhase, role: 'controller' | 'sa
       return <TossPage />
     }
 
-    case 'PRE_ROUND': {
+    case 'PRE_TURN': {
       if (!role) {
         return <div>Loading role…</div>
       }
@@ -63,16 +65,15 @@ function PhaseView({ phase, role }: { phase: GamePhase, role: 'controller' | 'sa
       return role === 'controller' ? <WaitingForGuessPage /> : <SubmitGuessPage />
     }
 
-    case 'ROUND_RESOLUTION': {
+    case 'SUBROUND_RESOLUTION': {
       return <RoundResolutionPage />
     }
 
-    case 'ROUND_WIN_CONTROL':
-    case 'ROUND_WIN_SABOTAGE': {
+    case 'TURN_END': {
       return <RoundResultPage />
     }
 
-    case 'POST_ROUND': {
+    case 'POST_TURN': {
       return <PostRoundPage />
     }
 
@@ -128,16 +129,43 @@ export function GameLayout() {
   }, [status, roomCode, navigate])
 
   if (status === 'connecting' && !isHydrated) {
-    return <div style={{ padding: '20px' }}>Connecting…</div>
+    return (
+      <div style={{
+        position: 'fixed', inset: 0, background: '#0a0a0a',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontFamily: '"JetBrains Mono Variable", monospace', color: 'rgba(194,214,133,0.6)',
+        fontSize: '0.85rem', letterSpacing: '0.2em', textTransform: 'uppercase',
+      }}
+      >
+        Connecting
+        <span style={{ marginLeft: '4px' }}>…</span>
+      </div>
+    )
   }
 
   if (status === 'error') {
     return (
-      <div style={{ padding: '20px' }}>
-        <p>Connection error. Please try again.</p>
-        <button onClick={() => {
-          navigate({ to: '/join' }).catch(console.error)
+      <div style={{
+        position: 'fixed', inset: 0, background: '#0a0a0a',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1.5rem',
+        fontFamily: '"JetBrains Mono Variable", monospace',
+      }}
+      >
+        <p style={{
+          color: '#723435', fontSize: '0.9rem', letterSpacing: '0.2em', textTransform: 'uppercase',
         }}
+        >
+          Connection error. Please try again.
+        </p>
+        <button
+          onClick={() => {
+            navigate({ to: '/join' }).catch(console.error)
+          }}
+          style={{
+            fontFamily: 'inherit', fontSize: '0.9rem', letterSpacing: '0.2em', textTransform: 'uppercase',
+            padding: '0.8rem 2.5rem', background: 'transparent',
+            border: '2px solid #C2D685', color: '#C2D685', cursor: 'pointer',
+          }}
         >
           Back to Lobby
         </button>
@@ -145,5 +173,29 @@ export function GameLayout() {
     )
   }
 
-  return <PhaseView phase={phase} role={role} />
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: '#0a0a0a' }}>
+      {/* Shared scrolling background behind all game phases */}
+      <Squares
+        speed={0.15}
+        squareSize={35}
+        direction='up'
+        borderColor='#4848483a'
+        bgColor='rgba(10, 10, 10, 1)'
+        hoverFillColor='#1a1a1a'
+      />
+      <AnimatePresence mode='wait'>
+        <motion.div
+          key={phase}
+          initial={{ opacity: 0, filter: 'brightness(2.5) saturate(0)' }}
+          animate={{ opacity: 1, filter: 'brightness(1) saturate(1)' }}
+          exit={{ opacity: 0, filter: 'brightness(0.3) saturate(0)', x: -8 }}
+          transition={{ duration: 0.3, ease: 'easeOut' }}
+          style={{ position: 'absolute', inset: 0 }}
+        >
+          <PhaseView phase={phase} role={role} />
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  )
 }

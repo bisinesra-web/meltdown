@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { useGameState } from '../../../hooks/useGameState'
+import { useGameState, gameStateSelectors } from '../../../hooks/useGameState'
+import '../../game/game-tokens.css'
 
 const PHASE_DURATION_MS = 60_000
 
@@ -8,9 +9,10 @@ function clampToZero(v: number): number {
 }
 
 export default function WaitingForCipherPage() {
-  const phaseEnteredAt = useGameState(s => s.phaseEnteredAt)
-  const cipherSelected = useGameState(s => s.cipherSelected)
-  const currentLevel = useGameState(s => s.currentLevel)
+  const phaseEnteredAt = useGameState(gameStateSelectors.phaseEnteredAt)
+  const cipherSelected = useGameState(gameStateSelectors.cipherSelected)
+  const currentLevel = useGameState(gameStateSelectors.currentLevel)
+  const currentTurn = useGameState(gameStateSelectors.currentTurn)
   const [timerSeconds, setTimerSeconds] = useState(60)
 
   useEffect(() => {
@@ -28,28 +30,56 @@ export default function WaitingForCipherPage() {
   }, [phaseEnteredAt])
 
   return (
-    <div style={{ padding: '20px', textAlign: 'center' }}>
-      <h1>PRE-ROUND (Sabotager)</h1>
-      <p>
-        Level:
-        {' '}
-        {currentLevel}
-      </p>
-      <p>
-        {cipherSelected
-          ? '✓ Controller has selected a cipher. Round starting soon…'
-          : 'Controller is building their cipher…'}
-      </p>
-      {!cipherSelected && (
-        <p>
-          Time remaining:
-          {' '}
-          <strong>
-            {timerSeconds}
-            s
-          </strong>
-        </p>
-      )}
+    <div className='game-phase'>
+      <div className='game-phase__entry-overlay' />
+      <div className='game-phase__vignette' />
+      <div className='game-phase__scanlines' />
+
+      <header className='game-phase__header'>
+        <h1 className='game-phase__brand'>MELTDOWN</h1>
+      </header>
+
+      <main className='game-phase__main'>
+        <div className='game-phase__card'>
+          <span className='game-phase__card-corner-tr' />
+          <span className='game-phase__card-corner-bl' />
+
+          <p className='game-phase__title' style={{ textAlign: 'center' }}>
+            {cipherSelected ? 'Cipher Locked In' : 'Awaiting Cipher'}
+          </p>
+
+          <p className='game-phase__subtitle' style={{ textAlign: 'center' }}>
+            Level&nbsp;
+            {currentLevel}
+            &nbsp;—&nbsp;Turn&nbsp;
+            {currentTurn}
+            /2
+          </p>
+
+          {cipherSelected
+            ? (
+                <p className='game-phase__success'>
+                  ✓ Controller has selected a cipher. Subround starting soon…
+                </p>
+              )
+            : (
+                <>
+                  <p className='game-phase__subtitle' style={{ textAlign: 'center' }}>
+                    Controller is building their cipher
+                    <span className='game-phase__waiting-dot' />
+                    <span className='game-phase__waiting-dot' />
+                    <span className='game-phase__waiting-dot' />
+                  </p>
+                  <div style={{ textAlign: 'center' }}>
+                    <p className={`game-phase__timer${timerSeconds <= 10 ? ' game-phase__timer--urgent' : ''}`}>
+                      {timerSeconds}
+                    </p>
+                    <p className='game-phase__timer-label'>seconds remaining</p>
+                  </div>
+                </>
+              )}
+        </div>
+      </main>
     </div>
   )
 }

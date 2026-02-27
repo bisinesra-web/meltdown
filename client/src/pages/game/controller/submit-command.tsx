@@ -1,6 +1,9 @@
-import { useState, useEffect } from 'react'
-import { useGameState } from '../../../hooks/useGameState'
-import { submitCommand } from '../../../lib/socket-actions'
+import { useEffect, useState } from 'react'
+import { useGameState, gameStateSelectors } from '../../../hooks/useGameState'
+import { selectCommand } from '../../../lib/socket-actions'
+import { ReactorHPBar } from '../../../components/reactor-hp-bar'
+import { useCrtGlitch } from '../../../hooks/useCrtGlitch'
+import '../../game/game-tokens.css'
 
 const PHASE_DURATION_MS = 30_000
 
@@ -9,21 +12,17 @@ function clampToZero(v: number): number {
 }
 
 export default function SubmitCommandPage() {
-  const recommendedCommand = useGameState(s => s.recommendedCommand)
-  const phaseEnteredAt = useGameState(s => s.phaseEnteredAt)
-  const errorMessage = useGameState(s => s.errorMessage)
-  const encryptedCommand = useGameState(s => s.encryptedCommand)
+  const commandOptions = useGameState(gameStateSelectors.commandOptions)
+  const commandEffectiveness = useGameState(gameStateSelectors.commandEffectiveness)
+  const selectedCommandIndex = useGameState(gameStateSelectors.selectedCommandIndex)
+  const phaseEnteredAt = useGameState(gameStateSelectors.phaseEnteredAt)
+  const reactorHP = useGameState(gameStateSelectors.reactorHP)
+  const errorMessage = useGameState(gameStateSelectors.errorMessage)
+  const encryptedCommand = useGameState(gameStateSelectors.encryptedCommand)
 
-  const [command, setCommand] = useState('')
-  const [status, setStatus] = useState<'idle' | 'submitted'>('idle')
   const [timerSeconds, setTimerSeconds] = useState(30)
-
-  // Prefill with the recommended command for convenience
-  useEffect(() => {
-    if (recommendedCommand && !command) {
-      setCommand(recommendedCommand)
-    }
-  }, [recommendedCommand])
+  const [submitted, setSubmitted] = useState(false)
+  const isGlitching = useCrtGlitch()
 
   // Countdown timer
   useEffect(() => {
@@ -40,72 +39,90 @@ export default function SubmitCommandPage() {
     }
   }, [phaseEnteredAt])
 
-  // Once encrypted command appears server has accepted our submission
+  // Once encrypted command appears, server has accepted our submission
   useEffect(() => {
     if (encryptedCommand) {
-      setStatus('submitted')
+      setSubmitted(true)
     }
   }, [encryptedCommand])
 
-  const handleSubmit = (event: React.FormEvent) => {
-    event.preventDefault()
-    if (!command.trim() || status === 'submitted') {
-      return
+  const handleSelectCommand = (index: 0 | 1 | 2) => {
+    if (!submitted) {
+      selectCommand(index)
     }
-
-    submitCommand(command.trim())
   }
 
+  const getEffectivenessLabel = (effectiveness: number): string => `+${effectiveness} HP`
+
   return (
-    <div style={{ padding: '20px' }}>
-      <h1>Submit Command (Controller)</h1>
-      <p>
-        Time remaining:
-        {' '}
-        <strong>
-          {timerSeconds}
-          s
-        </strong>
-      </p>
-      {recommendedCommand && (
-        <p>
-          Recommended command:
-          {' '}
-          <code>{recommendedCommand}</code>
-        </p>
-      )}
-      {status === 'submitted'
-        ? (
-            <p style={{ color: 'green' }}>✓ Command submitted. Waiting for sabotager…</p>
-          )
-        : (
-            <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              <input
-                disabled={status === 'submitted'}
-                onChange={(e) => {
-                  setCommand(e.target.value)
-                }}
-                placeholder='Component type attribute value'
-                style={{ flex: 1, padding: '8px', fontFamily: 'monospace' }}
-                type='text'
-                value={command}
-              />
-              <button
-                disabled={!command.trim() || status === 'submitted'}
-                style={{ padding: '8px 16px' }}
-                type='submit'
-              >
-                Submit
-              </button>
-            </form>
+    <div className={`game-phase${isGlitching ? ' game-phase--glitching' : ''}`}>
+      <div className='game-phase__entry-overlay' />
+      <div className='game-phase__vignette' />
+      <div className='game-phase__scanlines' />
+
+      <header className='game-phase__header'>
+        <h1 className='game-phase__brand'>MELTDOWN</h1>
+      </header>
+
+      <main className='game-phase__main'>
+        <div className='game-phase__card'>
+          <span className='game-phase__card-corner-tr' />
+          <span className='game-phase__card-corner-bl' />
+
+          <p className='game-phase__title'>Select Command</p>
+
+          <ReactorHPBar hp={reactorHP} phaseEnteredAt={phaseEnteredAt} ticking={!submitted} />
+
+          <div style={{ textAlign: 'center' }}>
+            <p className={`game-phase__timer${timerSeconds <= 10 ? ' game-phase__timer--urgent' : ''}`}>
+              {timerSeconds}
+            </p>
+            <p className='game-phase__timer-label'>seconds remaining</p>
+          </div>
+
+          {submitted
+            ? (
+                <p className='game-phase__success'>
+                  ✓ Command submitted — waiting for sabotager to guess
+                  <span className='game-phase__waiting-dot' />
+                  <span className='game-phase__waiting-dot' />
+                  <span className='game-phase__waiting-dot' />
+                </p>
+              )
+            : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                  <p className='game-phase__subtitle'>Choose one of 3 command options:</p>
+                  {commandOptions && commandEffectiveness
+                    ? commandOptions.map((option, index) => (
+                        <button
+                          key={index}
+                          className='game-phase__command-option'
+                          onClick={() => {
+                            handleSelectCommand(index as 0 | 1 | 2)
+                          }}
+                        >
+                          <code className='game-phase__command-text'>{option}</code>
+                          <span className='game-phase__command-effectiveness'>
+                            {getEffectivenessLabel(commandEffectiveness[index] ?? 0)}
+                          </span>
+                        </button>
+                      ))
+                    : (
+                        <p className='game-phase__subtitle'>
+                          Loading command options
+                          <span className='game-phase__waiting-dot' />
+                          <span className='game-phase__waiting-dot' />
+                          <span className='game-phase__waiting-dot' />
+                        </p>
+                      )}
+                </div>
+              )}
+
+          {errorMessage && (
+            <p className='game-phase__error'>{errorMessage}</p>
           )}
-      {errorMessage && (
-        <p style={{ color: 'red', marginTop: '8px' }}>
-          Error:
-          {' '}
-          {errorMessage}
-        </p>
-      )}
+        </div>
+      </main>
     </div>
   )
 }

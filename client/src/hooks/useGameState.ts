@@ -30,8 +30,9 @@ export const gameStateSelectors = {
   // Phase / progression
   phase: (state: GameState) => state.phase,
   currentLevel: (state: GameState) => state.currentLevel,
-  subRound: (state: GameState) => state.subRound,
-  roundNumber: (state: GameState) => state.roundNumber,
+  currentTurn: (state: GameState) => state.currentTurn,
+  currentSubround: (state: GameState) => state.currentSubround,
+  turnNumber: (state: GameState) => state.turnNumber,
   phaseEnteredAt: (state: GameState) => state.phaseEnteredAt,
 
   // Scores / players
@@ -40,7 +41,7 @@ export const gameStateSelectors = {
   player2Name: (state: GameState) => state.player2Name,
   player1Ready: (state: GameState) => state.player1Ready,
   player2Ready: (state: GameState) => state.player2Ready,
-  bothReadyForRound: (state: GameState) =>
+  bothReadyForTurn: (state: GameState) =>
     state.player1Ready && state.player2Ready,
 
   // Coin toss / roles
@@ -53,15 +54,21 @@ export const gameStateSelectors = {
   role: (state: GameState) => state.role,
   cipher: (state: GameState) => state.cipher,
 
-  // Round data (public)
+  // Reactor and command mechanics
+  reactorHP: (state: GameState) => state.reactorHP,
+  commandOptions: (state: GameState) => state.commandOptions,
+  commandEffectiveness: (state: GameState) => state.commandEffectiveness,
+  selectedCommandIndex: (state: GameState) => state.selectedCommandIndex,
   cipherSelected: (state: GameState) => state.cipherSelected,
-  recommendedCommand: (state: GameState) => state.recommendedCommand,
+
+  // Turn data (public)
   encryptedCommand: (state: GameState) => state.encryptedCommand,
   controllerCommand: (state: GameState) => state.controllerCommand,
   sabotagerGuess: (state: GameState) => state.sabotagerGuess,
+  plaintextCiphertextPairs: (state: GameState) => state.plaintextCiphertextPairs,
 
-  // Round/game outcome
-  roundWinner: (state: GameState) => state.roundWinner,
+  // Turn/game outcome
+  turnWinner: (state: GameState) => state.turnWinner,
   gameWinner: (state: GameState) => state.gameWinner,
 
   // Misc

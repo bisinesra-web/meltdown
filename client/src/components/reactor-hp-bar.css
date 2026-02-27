@@ -1,0 +1,95 @@
+/* ── Scoped to .reactor-hp-bar ── */
+.reactor-hp-bar,
+.reactor-hp-bar *,
+.reactor-hp-bar *::before,
+.reactor-hp-bar *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.reactor-hp-bar {
+  --rhp-font: "JetBrains Mono Variable", "Courier New", monospace;
+  --rhp-green:  #C2D685;
+  --rhp-yellow: #eab308;
+  --rhp-red:    #723435;
+  --rhp-bg:     rgba(0, 0, 0, 0.6);
+  --rhp-border: rgba(194, 214, 133, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  width: 100%;
+}
+
+.reactor-hp-bar__label {
+  font-family: var(--rhp-font);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: rgba(194, 214, 133, 0.5);
+  display: flex;
+  justify-content: space-between;
+}
+
+.reactor-hp-bar__value {
+  color: #C2D685;
+  text-shadow: 0 0 8px rgba(194, 214, 133, 0.5);
+  transition: color 0.5s ease;
+}
+
+.reactor-hp-bar__value--warn  { color: #eab308; text-shadow: 0 0 8px rgba(234, 179, 8, 0.6); }
+.reactor-hp-bar__value--crit  { color: #723435; text-shadow: 0 0 8px rgba(114, 52, 53, 0.8); }
+
+/* Track */
+.reactor-hp-bar__track {
+  position: relative;
+  width: 100%;
+  height: 20px;
+  background: var(--rhp-bg);
+  border: 1px solid var(--rhp-border);
+  overflow: hidden;
+}
+
+/* Scanlines on the track */
+.reactor-hp-bar__track::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent,
+    transparent 3px,
+    rgba(0, 0, 0, 0.15) 3px,
+    rgba(0, 0, 0, 0.15) 4px
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Fill */
+.reactor-hp-bar__fill {
+  height: 100%;
+  transition: width 0.4s ease-out, background-color 0.5s ease;
+  background-color: #C2D685;
+  position: relative;
+}
+
+.reactor-hp-bar__fill--warn { background-color: #eab308; }
+.reactor-hp-bar__fill--crit { background-color: #723435; }
+
+/* Percentage label centred over the bar */
+.reactor-hp-bar__pct {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--rhp-font);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  z-index: 3;
+  letter-spacing: 0.1em;
+}
