@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react'
+import { Link } from '@tanstack/react-router'
 import {
   AmbientLight,
   Color,
@@ -298,6 +299,103 @@ export default function Landing() {
           LWV4ZXWU
         </h1>
       </section>
+      <section className='rules-section'>
+        <div className='rules-inner'>
+
+          <div className='rules-header-row'>
+            <span className='rules-tag'>SYS:MANUAL</span>
+            <h2 className='rules-heading'>HOW_TO_PLAY.md</h2>
+            <span className='rules-tag rules-tag--right'>REV 1.0</span>
+          </div>
+
+          <div className='rules-grid'>
+
+            <div className='rule-card'>
+              <div className='rule-label'>[01] SETUP</div>
+              <p>
+                {'Two operators. One reactor. A '}
+                <span className='hl-red'>Controller</span>
+                {' transmits encrypted commands to the plant. A '}
+                <span className='hl-green'>Sabotager</span>
+                {' intercepts the signal and tries to decode it before the core melts down.'}
+              </p>
+            </div>
+
+            <div className='rule-card'>
+              <div className='rule-label'>[02] CIPHER</div>
+              <p>
+                {'Before each turn the '}
+                <span className='hl-red'>Controller</span>
+                {' selects a cipher — a transformation applied to every command. The '}
+                <span className='hl-green'>Sabotager</span>
+                {' sees only garbled output and has up to '}
+                <span className='hl-green'>3 subrounds</span>
+                {' to crack the pattern.'}
+              </p>
+            </div>
+
+            <div className='rule-card'>
+              <div className='rule-label'>[03] COMMAND</div>
+              <p>
+                {'Each subround the '}
+                <span className='hl-red'>Controller</span>
+                {' picks one of 3 commands — e.g. '}
+                <code>reactor A pressure +50</code>
+                {'. It gets encrypted and broadcast. The '}
+                <span className='hl-green'>Sabotager</span>
+                {' must guess the exact original — all 4 parts.'}
+              </p>
+            </div>
+
+            <div className='rule-card'>
+              <div className='rule-label'>[04] REACTOR HP</div>
+              <p>
+                {'Reactor starts each turn at '}
+                <span className='hl-green'>100 HP</span>
+                {'. HP ticks down 1/sec while the Controller decides. A perfect 4/4 guess sets HP to '}
+                <span className='hl-red'>zero instantly</span>
+                . Drop to 0 and the Sabotager wins the turn.
+              </p>
+            </div>
+
+            <div className='rule-card'>
+              <div className='rule-label'>[05] SCORING</div>
+              <p>
+                <span className='hl-green'>3 levels</span>
+                {', 2 turns each = '}
+                <span className='hl-green'>6 turns total</span>
+                {'. Roles swap every turn. Win a turn, earn a point. Most points after 6 turns wins. A '}
+                <span className='hl-red'>3-3 draw</span>
+                {' is possible.'}
+              </p>
+            </div>
+
+            <div className='rule-card'>
+              <div className='rule-label'>[06] COIN TOSS</div>
+              <p>
+                {'A coin toss at the start of each level decides who is '}
+                <span className='hl-red'>Controller</span>
+                {' first. The winner transmits; the loser intercepts. Roles swap for the second turn of that level.'}
+              </p>
+            </div>
+
+          </div>
+
+          <div className='join-area'>
+            <Link to='/join' className='btn btn-primary join-btn'>
+              [ JOIN ROOM ]
+            </Link>
+          </div>
+
+        </div>
+      </section>
+
+      <footer className='landing-footer'>
+        {'A game developed by '}
+        <span className='hl-green'>OWASP</span>
+        {' Indian Institute of Information Technology Kottayam'}
+      </footer>
+
     </div>
   )
 }

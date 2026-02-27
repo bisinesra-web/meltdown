@@ -242,6 +242,186 @@
   animation: blink 1s infinite;
 }
 
+/* ── Rules Section ── */
+.landing-page-body .rules-section {
+  position: relative;
+  z-index: 2;
+  padding: 4rem 2rem 3rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.landing-page-body .rules-inner {
+  border: 1px solid rgba(194, 214, 133, 0.2);
+  background: rgba(10, 10, 10, 0.85);
+  padding: 2.5rem 2.5rem 2.5rem;
+  backdrop-filter: blur(6px);
+}
+
+/* ── Rules header row ── */
+.landing-page-body .rules-header-row {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  border-bottom: 1px solid rgba(194, 214, 133, 0.2);
+  padding-bottom: 1rem;
+  margin-bottom: 2.5rem;
+}
+
+.landing-page-body .rules-heading {
+  font-family: "JetBrains Mono Variable", monospace;
+  font-size: clamp(1rem, 2.5vw, 1.3rem);
+  font-weight: 700;
+  color: #C2D685;
+  letter-spacing: 0.12em;
+  flex: 1;
+  margin: 0;
+  text-shadow:
+    0 0 16px rgba(194, 214, 133, 0.5),
+    0 0 32px rgba(194, 214, 133, 0.25);
+}
+
+.landing-page-body .rules-tag {
+  font-family: "JetBrains Mono Variable", monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  color: rgba(194, 214, 133, 0.35);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.landing-page-body .rules-tag--right {
+  margin-left: auto;
+}
+
+/* ── Rules grid ── */
+.landing-page-body .rules-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1px;
+  border: 1px solid rgba(194, 214, 133, 0.12);
+  margin-bottom: 3rem;
+}
+
+.landing-page-body .rule-card {
+  border: none;
+  border-right: 1px solid rgba(194, 214, 133, 0.1);
+  border-bottom: 1px solid rgba(194, 214, 133, 0.1);
+  background: rgba(0, 0, 0, 0.4);
+  padding: 1.5rem 1.5rem 1.5rem;
+  transition: background 0.15s ease;
+}
+
+.landing-page-body .rule-card:hover {
+  background: rgba(194, 214, 133, 0.04);
+}
+
+/* ── Rule label (replaces emoji icon) ── */
+.landing-page-body .rule-label {
+  font-family: "JetBrains Mono Variable", monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: rgba(194, 214, 133, 0.5);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 0.9rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(194, 214, 133, 0.12);
+}
+
+.landing-page-body .rule-card p {
+  font-family: "JetBrains Mono Variable", monospace;
+  font-size: 0.82rem;
+  color: rgba(210, 225, 185, 0.7);
+  line-height: 1.8;
+  margin: 0;
+}
+
+.landing-page-body .rule-card code {
+  background: rgba(114, 52, 53, 0.15);
+  border: 1px solid rgba(114, 52, 53, 0.4);
+  padding: 0.05em 0.4em;
+  font-family: "JetBrains Mono Variable", monospace;
+  font-size: 0.85em;
+  color: #e07878;
+  letter-spacing: 0.05em;
+}
+
+.landing-page-body .hl-green {
+  color: #C2D685;
+  font-weight: 700;
+}
+
+.landing-page-body .hl-red {
+  color: #c45a5a;
+  font-weight: 700;
+}
+
+/* ── Join Button ── */
+.landing-page-body .join-area {
+  display: flex;
+  justify-content: center;
+  padding-top: 0.5rem;
+}
+
+.landing-page-body .join-btn {
+  font-family: "JetBrains Mono Variable", monospace;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  padding: 0.9rem 3.5rem;
+  text-decoration: none;
+  display: inline-block;
+  border: 2px solid #C2D685;
+  color: #C2D685;
+  background: transparent;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.landing-page-body .join-btn:hover {
+  background: #C2D685;
+  color: #0a0a0a;
+  box-shadow: 0 0 28px rgba(194, 214, 133, 0.5), 0 0 8px rgba(194, 214, 133, 0.2) inset;
+}
+
+.landing-page-body .join-btn:active {
+  transform: scale(0.97);
+}
+
+/* ── Footer ── */
+.landing-page-body .landing-footer {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: 2rem 1rem 3rem;
+  font-size: 0.72rem;
+  color: rgba(194, 214, 133, 0.25);
+  letter-spacing: 0.1em;
+  font-family: "JetBrains Mono Variable", monospace;
+  text-transform: uppercase;
+}
+
+.landing-page-body .landing-footer .hl-green {
+  color: rgba(194, 214, 133, 0.55);
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .landing-page-body .rules-inner {
+    padding: 1.5rem 1.25rem;
+  }
+
+  .landing-page-body .rules-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-page-body .rules-tag {
+    display: none;
+  }
+}
+
 /* Status Indicators */
 .landing-page-body .status {
   display: inline-block;
