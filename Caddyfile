@@ -1,0 +1,13 @@
+{env.DOMAIN} {
+    # Socket.IO — WebSocket + long-polling with immediate flush
+    reverse_proxy /socket.io/* backend:3000 {
+        flush_interval -1
+    }
+
+    # REST API
+    reverse_proxy /rooms* backend:3000
+    reverse_proxy /game*  backend:3000
+
+    # Frontend SPA
+    reverse_proxy * frontend:80
+}
