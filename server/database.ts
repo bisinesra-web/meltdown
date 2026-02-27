@@ -2,8 +2,10 @@ import sqlite3 from 'sqlite3'
 import { open } from 'sqlite'
 
 // Open the database file
+const dbPath = process.env.DATA_DIR ? `${process.env.DATA_DIR}/game.db` : 'game.db'
+
 export const database = await open({
-  filename: 'game.db',
+  filename: dbPath,
   driver: sqlite3.Database,
 })
 

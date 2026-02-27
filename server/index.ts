@@ -13,14 +13,16 @@ logger.info('Database initialized')
 
 const app = express()
 const httpServer = http.createServer(app)
+const clientOrigin = process.env.CLIENT_ORIGIN ?? 'http://localhost:5173'
+
 const io = new Server(httpServer, {
   cors: {
-    origin: 'http://localhost:5173',
+    origin: clientOrigin,
   },
 })
 
 // Middleware
-app.use(cors({ origin: 'http://localhost:5173' }))
+app.use(cors({ origin: clientOrigin }))
 app.use(express.json())
 
 app.use('/rooms', roomsRouter)
