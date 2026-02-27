@@ -10,16 +10,11 @@ import {
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 import Landing from './pages/landing'
 import Join from './pages/join'
-import TossPage from './pages/game/toss'
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import AdminPage from './pages/admin'
 import TeamSetup from './pages/team-setup'
-import WaitingRoom from './pages/game/waiting'
 import { GameLayout } from './pages/game-layout'
-import GameRoute1 from './pages/game/route-1'
-import GameRoute2 from './pages/game/route-2'
-import CipherPage from './pages/game/cipher'
 
 const queryClient = new QueryClient()
 
@@ -66,39 +61,10 @@ const teamChooseRoute = createRoute({
   component: TeamSetup,
 })
 
-const gameLayoutRoute = createRoute({
+const gameRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/game',
   component: GameLayout,
-})
-
-const gameRoute1 = createRoute({
-  getParentRoute: () => gameLayoutRoute,
-  path: '/1',
-  component: GameRoute1,
-})
-
-const waitingRoomRoute = createRoute({
-  getParentRoute: () => gameLayoutRoute,
-  path: '/wait',
-  component: WaitingRoom,
-})
-
-const gameRoute2 = createRoute({
-  getParentRoute: () => gameLayoutRoute,
-  path: '/2',
-  component: GameRoute2,
-})
-const tossRoute = createRoute({
-  getParentRoute: () => gameLayoutRoute,
-  path: '/toss',
-  component: TossPage,
-})
-
-const cipherRoute = createRoute({
-  getParentRoute: () => gameLayoutRoute,
-  path: '/cipher',
-  component: CipherPage,
 })
 
 const routeTree = rootRoute.addChildren([
@@ -107,8 +73,9 @@ const routeTree = rootRoute.addChildren([
   joinRoute,
   adminRoute,
   teamChooseRoute,
-  gameLayoutRoute.addChildren([gameRoute1, waitingRoomRoute, gameRoute2, tossRoute, cipherRoute]),
+  gameRoute,
 ])
+
 
 const router = createRouter({
   routeTree,

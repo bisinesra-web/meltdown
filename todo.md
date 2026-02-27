@@ -1,2 +1,2 @@
-add side secret injection
-toss page: fix state to server.
+add side page for secret injection
+validate all user inputs on the server side for ASCII and length limits.

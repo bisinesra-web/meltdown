@@ -42,7 +42,7 @@ export default function TeamSetup() {
 
     try {
       await joinTeam.mutateAsync({ roomCode, teamName: selectedTeam })
-      navigate({ to: '/game/wait' }).catch(console.error)
+      navigate({ to: '/game' }).catch(console.error)
     }
     catch {
       // Error is already reflected in joinTeam state.

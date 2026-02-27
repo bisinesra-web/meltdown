@@ -27,16 +27,44 @@ export function useGameState<T>(selector?: (state: GameState) => T): T | GameSta
  * Use these to avoid creating inline selectors.
  */
 export const gameStateSelectors = {
+  // Phase / progression
   phase: (state: GameState) => state.phase,
-  scores: (state: GameState) => state.scores,
+  currentLevel: (state: GameState) => state.currentLevel,
+  subRound: (state: GameState) => state.subRound,
   roundNumber: (state: GameState) => state.roundNumber,
-  playerNumber: (state: GameState) => state.playerNumber,
-  cipher: (state: GameState) => state.cipher,
-  level: (state: GameState) => state.level,
-  errorMessage: (state: GameState) => state.errorMessage,
-  isHydrated: (state: GameState) => state.isHydrated,
+  phaseEnteredAt: (state: GameState) => state.phaseEnteredAt,
+
+  // Scores / players
+  scores: (state: GameState) => state.scores,
+  player1Name: (state: GameState) => state.player1Name,
+  player2Name: (state: GameState) => state.player2Name,
   player1Ready: (state: GameState) => state.player1Ready,
   player2Ready: (state: GameState) => state.player2Ready,
   bothReadyForRound: (state: GameState) =>
     state.player1Ready && state.player2Ready,
+
+  // Coin toss / roles
+  coinTossWinner: (state: GameState) => state.coinTossWinner,
+  controller: (state: GameState) => state.controller,
+  sabotager: (state: GameState) => state.sabotager,
+
+  // Private player info
+  playerNumber: (state: GameState) => state.playerNumber,
+  role: (state: GameState) => state.role,
+  cipher: (state: GameState) => state.cipher,
+
+  // Round data (public)
+  cipherSelected: (state: GameState) => state.cipherSelected,
+  recommendedCommand: (state: GameState) => state.recommendedCommand,
+  encryptedCommand: (state: GameState) => state.encryptedCommand,
+  controllerCommand: (state: GameState) => state.controllerCommand,
+  sabotagerGuess: (state: GameState) => state.sabotagerGuess,
+
+  // Round/game outcome
+  roundWinner: (state: GameState) => state.roundWinner,
+  gameWinner: (state: GameState) => state.gameWinner,
+
+  // Misc
+  errorMessage: (state: GameState) => state.errorMessage,
+  isHydrated: (state: GameState) => state.isHydrated,
 } as const

@@ -7,10 +7,15 @@ import { CipherSchema } from './cipher-validator.js'
 
 export const GamePhaseSchema = z.enum([
   'WAITING_FOR_PLAYERS',
+  'ALL_PLAYERS_CONNECTED',
   'COIN_TOSSING',
   'COIN_TOSSED',
   'PRE_ROUND',
-  'IN_ROUND',
+  'CHALL_CONTROL',
+  'CHALL_SABOTAGE',
+  'ROUND_RESOLUTION',
+  'ROUND_WIN_CONTROL',
+  'ROUND_WIN_SABOTAGE',
   'POST_ROUND',
   'GAME_OVER',
 ])
@@ -23,6 +28,8 @@ export type GamePhase = z.infer<typeof GamePhaseSchema>
 export const PublicStateSchema = z.object({
   phase: GamePhaseSchema,
   phaseEnteredAt: z.string(),
+  currentLevel: z.number(),
+  subRound: z.enum(['A', 'B']),
   roundNumber: z.number(),
   scores: z.object({
     player1: z.number(),
@@ -31,19 +38,17 @@ export const PublicStateSchema = z.object({
   player1Name: z.string(),
   player2Name: z.string(),
   coinTossWinner: z.union([z.literal(1), z.literal(2)]).optional(),
+  controller: z.union([z.literal(1), z.literal(2)]).optional(),
+  sabotager: z.union([z.literal(1), z.literal(2)]).optional(),
   player1Ready: z.boolean(),
   player2Ready: z.boolean(),
   roundWinner: z.union([z.literal(1), z.literal(2), z.literal('draw')]).optional(),
   gameWinner: z.union([z.literal(1), z.literal(2)]).optional(),
-  // IN_ROUND public data
-  reactorHealth: z.number().optional(),
-  droppedCommandCount: z.number().optional(),
-  crackedCount: z.object({
-    player1: z.number(),
-    player2: z.number(),
-  }).optional(),
-  roundStartedAt: z.string().optional(),
-  level: z.number().optional(),
+  cipherSelected: z.boolean(),
+  recommendedCommand: z.string().optional(),
+  encryptedCommand: z.string().optional(),
+  controllerCommand: z.string().nullable().optional(),
+  sabotagerGuess: z.string().nullable().optional(),
 })
 
 export type PublicState = z.infer<typeof PublicStateSchema>
@@ -53,12 +58,10 @@ export type PublicState = z.infer<typeof PublicStateSchema>
  */
 export const PrivateStateSchema = z.object({
   playerNumber: z.union([z.literal(1), z.literal(2)]),
+  role: z.enum(['controller', 'sabotager']).optional(),
   cipher: CipherSchema.optional(),
-  myCommands: z.array(z.object({
-    id: z.string(),
-    text: z.string(),
-    cracked: z.boolean(),
-  })).optional(),
+  controllerCommand: z.string().nullable().optional(),
+  sabotagerGuess: z.string().nullable().optional(),
 })
 
 export type PrivateState = z.infer<typeof PrivateStateSchema>

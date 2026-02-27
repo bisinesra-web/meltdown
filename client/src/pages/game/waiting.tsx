@@ -32,6 +32,8 @@ import { useCrtGlitch } from '../../hooks/useCrtGlitch'
 import { useGameState } from '../../hooks/useGameState'
 import './waiting.css'
 import { useNavigate } from '@tanstack/react-router'
+// navigate is now only used to return to /join on GAME_OVER (handled by game-layout)
+// Keep import to avoid removing it here in case it's used elsewhere
 
 /* ── Material name → friendly sector label mapping ── */
 const SECTOR_MAP: Record<string, string> = {
@@ -57,26 +59,14 @@ const SECTOR_MAP: Record<string, string> = {
 const REACTOR_NAMES = new Set(['reactora', 'reactorb'])
 
 export default function WaitingRoom() {
-  const navigate = useNavigate()
   const [textContent, setTextContent] = React.useState('AWAITING EXTERNAL CONNECTION...')
   const phase = useGameState(s => s.phase)
 
-  // Handle phase transitions and navigation
   useEffect(() => {
-    console.log('[WaitingRoom] Phase changed:', phase)
-
-    if (phase === 'GAME_OVER') {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setTextContent('GAME OVER. RETURNING TO LOBBY...')
-      navigate({ to: '/join' }).catch(console.error)
-    }
-    else if (phase !== 'WAITING_FOR_PLAYERS') {
+    if (phase !== 'WAITING_FOR_PLAYERS') {
       setTextContent('EXTERNAL CONNECTION ESTABLISHED!')
-      setTimeout(() => {
-        navigate({ to: '/game/toss' }).catch(console.error)
-      }, 1500)
     }
-  }, [phase, navigate])
+  }, [phase])
   const mountReference = useRef<HTMLDivElement | null>(null)
   const initializedReference = useRef(false)
   const modelReference = useRef<Group | null>(null)
