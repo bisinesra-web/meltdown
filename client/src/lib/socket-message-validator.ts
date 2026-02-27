@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { CipherSchema } from './cipher-validator.js'
 
 // ---------------------------------------------------------------------------
 // Zod schemas mirroring server/socket/game-types.ts
@@ -29,11 +30,20 @@ export const PublicStateSchema = z.object({
   }),
   player1Name: z.string(),
   player2Name: z.string(),
-  coinTossWinner: z.literal([1, 2]).optional(),
+  coinTossWinner: z.union([z.literal(1), z.literal(2)]).optional(),
   player1Ready: z.boolean(),
   player2Ready: z.boolean(),
-  roundWinner: z.literal([1, 2, 'draw']).optional(),
-  gameWinner: z.literal([1, 2]).optional(),
+  roundWinner: z.union([z.literal(1), z.literal(2), z.literal('draw')]).optional(),
+  gameWinner: z.union([z.literal(1), z.literal(2)]).optional(),
+  // IN_ROUND public data
+  reactorHealth: z.number().optional(),
+  droppedCommandCount: z.number().optional(),
+  crackedCount: z.object({
+    player1: z.number(),
+    player2: z.number(),
+  }).optional(),
+  roundStartedAt: z.string().optional(),
+  level: z.number().optional(),
 })
 
 export type PublicState = z.infer<typeof PublicStateSchema>
@@ -42,8 +52,13 @@ export type PublicState = z.infer<typeof PublicStateSchema>
  * Schema for private state sent to individual players.
  */
 export const PrivateStateSchema = z.object({
-  playerNumber: z.literal([1, 2]),
-  cipher: z.string().optional(),
+  playerNumber: z.union([z.literal(1), z.literal(2)]),
+  cipher: CipherSchema.optional(),
+  myCommands: z.array(z.object({
+    id: z.string(),
+    text: z.string(),
+    cracked: z.boolean(),
+  })).optional(),
 })
 
 export type PrivateState = z.infer<typeof PrivateStateSchema>
@@ -57,6 +72,15 @@ export const GameStateEventSchema = z.object({
 })
 
 export type GameStateEvent = z.infer<typeof GameStateEventSchema>
+
+/**
+ * Schema for game error messages sent over the socket.
+ */
+export const GameErrorEventSchema = z.object({
+  message: z.string(),
+})
+
+export type GameErrorEvent = z.infer<typeof GameErrorEventSchema>
 
 /**
  * Parse and validate incoming socket data.

@@ -35,19 +35,18 @@ export default function TeamSetup() {
     { label: '\u00A0' + player2Name, value: player2Name },
   ]
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (!selectedTeam || joinTeam.isPending) {
       return
     }
 
-    joinTeam.mutate(
-      { roomCode, teamName: selectedTeam },
-      {
-        onSuccess() {
-          navigate({ to: '/game/wait' }).catch(console.error)
-        },
-      },
-    )
+    try {
+      await joinTeam.mutateAsync({ roomCode, teamName: selectedTeam })
+      navigate({ to: '/game/wait' }).catch(console.error)
+    }
+    catch {
+      // Error is already reflected in joinTeam state.
+    }
   }
 
   const errorMessage = joinTeam.isError
@@ -113,7 +112,9 @@ export default function TeamSetup() {
 
             <button
               className='team-setup-page__confirm-btn'
-              onClick={handleConfirm}
+              onClick={() => {
+                handleConfirm().catch(console.error)
+              }}
               disabled={!selectedTeam || joinTeam.isPending}
             >
               {joinTeam.isPending ? 'AUTHENTICATING...' : 'CONFIRM TEAM'}

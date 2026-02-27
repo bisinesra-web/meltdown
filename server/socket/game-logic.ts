@@ -10,6 +10,10 @@ import {
   ensureTimersScheduled,
   recordBothPlayersConnected,
   handleCipherSelect,
+  handleSubmitCommand,
+  handleSubmitGuess,
+  handlePlayerReady,
+  emitStateToRoom,
 } from './state-machine.js'
 
 // Re-export so external consumers (e.g. index.ts) keep working
@@ -197,23 +201,60 @@ export function registerGameHandlers(io: Server): void {
     })
 
     // -----------------------------------------------------------------------
-    // game:select_cipher — player submits their cipher choice during PRE_ROUND
+    // game:select_cipher — controller submits cipher choice during PRE_ROUND
     // -----------------------------------------------------------------------
     socket.on('game:select_cipher', (payload: unknown) => {
-      if (
-        typeof payload !== 'object'
-        || payload === null
-        || typeof (payload as Record<string, unknown>).cipher !== 'string'
-      ) {
-        socket.emit('game:error', { message: 'cipher must be a string' })
-        return
-      }
-
-      const { cipher } = payload as { cipher: string }
-
-      handleCipherSelect(io, roomCode, playerNumber, cipher).catch((error: unknown) => {
+      handleCipherSelect(io, roomCode, playerNumber, payload).then((result) => {
+        if (!result.success) {
+          socket.emit('game:error', { message: result.error || 'Failed to process cipher selection' })
+        }
+      }).catch((error: unknown) => {
         logger.error('Error handling cipher select', { socketId: socket.id, error })
         socket.emit('game:error', { message: 'Failed to process cipher selection' })
+      })
+    })
+
+    // -----------------------------------------------------------------------
+    // game:submit_command — controller submits command during CHALL_CONTROL
+    // -----------------------------------------------------------------------
+    socket.on('game:submit_command', (payload: unknown) => {
+      const command = (payload as Record<string, unknown>)?.command
+      handleSubmitCommand(io, roomCode, playerNumber, command).then((result) => {
+        if (!result.success) {
+          socket.emit('game:error', { message: result.error || 'Failed to submit command' })
+        }
+      }).catch((error: unknown) => {
+        logger.error('Error handling submit_command', { socketId: socket.id, error })
+        socket.emit('game:error', { message: 'Failed to submit command' })
+      })
+    })
+
+    // -----------------------------------------------------------------------
+    // game:submit_guess — sabotager submits guess during CHALL_SABOTAGE
+    // -----------------------------------------------------------------------
+    socket.on('game:submit_guess', (payload: unknown) => {
+      const guess = (payload as Record<string, unknown>)?.guess
+      handleSubmitGuess(io, roomCode, playerNumber, guess).then((result) => {
+        if (!result.success) {
+          socket.emit('game:error', { message: result.error || 'Failed to submit guess' })
+        }
+      }).catch((error: unknown) => {
+        logger.error('Error handling submit_guess', { socketId: socket.id, error })
+        socket.emit('game:error', { message: 'Failed to submit guess' })
+      })
+    })
+
+    // -----------------------------------------------------------------------
+    // game:player_ready — either player signals ready during POST_ROUND
+    // -----------------------------------------------------------------------
+    socket.on('game:player_ready', () => {
+      handlePlayerReady(io, roomCode, playerNumber).then((result) => {
+        if (!result.success) {
+          socket.emit('game:error', { message: result.error || 'Failed to mark player ready' })
+        }
+      }).catch((error: unknown) => {
+        logger.error('Error handling player_ready', { socketId: socket.id, error })
+        socket.emit('game:error', { message: 'Failed to mark player ready' })
       })
     })
 

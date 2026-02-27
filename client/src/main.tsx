@@ -19,6 +19,7 @@ import WaitingRoom from './pages/game/waiting'
 import { GameLayout } from './pages/game-layout'
 import GameRoute1 from './pages/game/route-1'
 import GameRoute2 from './pages/game/route-2'
+import CipherPage from './pages/game/cipher'
 
 const queryClient = new QueryClient()
 
@@ -94,13 +95,19 @@ const tossRoute = createRoute({
   component: TossPage,
 })
 
+const cipherRoute = createRoute({
+  getParentRoute: () => gameLayoutRoute,
+  path: '/cipher',
+  component: CipherPage,
+})
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   aboutRoute,
   joinRoute,
   adminRoute,
   teamChooseRoute,
-  gameLayoutRoute.addChildren([gameRoute1, waitingRoomRoute, gameRoute2, tossRoute]),
+  gameLayoutRoute.addChildren([gameRoute1, waitingRoomRoute, gameRoute2, tossRoute, cipherRoute]),
 ])
 
 const router = createRouter({

@@ -8,6 +8,10 @@ import type {
   PrivateState,
   GamePhase,
 } from './game-types.js'
+import type { Cipher } from './cipher-types.js'
+import { CipherSchema } from './cipher-types.js'
+import { isCipherValid, sanitizeCipher } from './cipher-validator.js'
+import { encrypt, isValidCommandFormat, generateRandomCommand } from './cipher-engine.js'
 
 // ---------------------------------------------------------------------------
 // Timer registry — one pending timer per room at most
@@ -41,6 +45,47 @@ function clearRoomTimer(roomCode: string): void {
 }
 
 // ---------------------------------------------------------------------------
+// Role helpers
+// ---------------------------------------------------------------------------
+
+function deriveController(coinTossWinner: 1 | 2, subRound: 'A' | 'B'): 1 | 2 {
+  if (subRound === 'A') {
+    return coinTossWinner
+  }
+
+  return coinTossWinner === 1 ? 2 : 1
+}
+
+/**
+ * Compares two command strings using parsed 4-component comparison.
+ * Each component is compared individually, case-insensitively, after trimming.
+ */
+function compareCommands(a: string, b: string): boolean {
+  const partsA = a.trim().split(/\s+/)
+  const partsB = b.trim().split(/\s+/)
+  if (partsA.length !== 4 || partsB.length !== 4) {
+    return false
+  }
+
+  return partsA.every((part, index) => part.toLowerCase() === partsB[index].toLowerCase())
+}
+
+/** Cleared per-round transient fields when entering PRE_ROUND. */
+function freshRoundFields(): Partial<StoredGameState> {
+  return {
+    controllerCipher: undefined,
+    cipherSelected: false,
+    recommendedCommand: undefined,
+    controllerCommand: undefined,
+    encryptedCommand: undefined,
+    sabotagerGuess: undefined,
+    roundWinner: undefined,
+    player1Ready: false,
+    player2Ready: false,
+  }
+}
+
+// ---------------------------------------------------------------------------
 // State factory
 // ---------------------------------------------------------------------------
 
@@ -48,8 +93,11 @@ export function createInitialState(): StoredGameState {
   return {
     phase: 'WAITING_FOR_PLAYERS',
     phaseEnteredAt: nowIso(),
-    roundNumber: 0,
+    currentLevel: 1,
+    subRound: 'A',
+    roundNumber: 1,
     scores: { player1: 0, player2: 0 },
+    cipherSelected: false,
     player1Ready: false,
     player2Ready: false,
   }
@@ -63,25 +111,63 @@ export function buildPublicState(
   stored: StoredGameState,
   room: { player_1_name: string, player_2_name: string },
 ): PublicState {
+  const revealRound = (
+    stored.phase === 'ROUND_RESOLUTION'
+    || stored.phase === 'ROUND_WIN_CONTROL'
+    || stored.phase === 'ROUND_WIN_SABOTAGE'
+    || stored.phase === 'POST_ROUND'
+    || stored.phase === 'GAME_OVER'
+  )
+
   return {
     phase: stored.phase,
     phaseEnteredAt: stored.phaseEnteredAt,
+    currentLevel: stored.currentLevel,
+    subRound: stored.subRound,
     roundNumber: stored.roundNumber,
     scores: stored.scores,
     player1Name: room.player_1_name,
     player2Name: room.player_2_name,
     coinTossWinner: stored.coinTossWinner,
+    controller: stored.controller,
+    sabotager: stored.sabotager,
     player1Ready: stored.player1Ready,
     player2Ready: stored.player2Ready,
     roundWinner: stored.roundWinner,
     gameWinner: stored.gameWinner,
+    cipherSelected: stored.cipherSelected,
+    recommendedCommand: stored.recommendedCommand,
+    encryptedCommand: stored.encryptedCommand,
+    controllerCommand: revealRound ? stored.controllerCommand : undefined,
+    sabotagerGuess: revealRound ? stored.sabotagerGuess : undefined,
   }
 }
 
 export function buildPrivateState(stored: StoredGameState, playerNumber: 1 | 2): PrivateState {
+  const role: 'controller' | 'sabotager' | undefined
+    = stored.controller === undefined
+      ? undefined
+      : (stored.controller === playerNumber ? 'controller' : 'sabotager')
+
+  const isController = role === 'controller'
+  const isSabotager = role === 'sabotager'
+
+  const revealRound = (
+    stored.phase === 'ROUND_RESOLUTION'
+    || stored.phase === 'ROUND_WIN_CONTROL'
+    || stored.phase === 'ROUND_WIN_SABOTAGE'
+    || stored.phase === 'POST_ROUND'
+    || stored.phase === 'GAME_OVER'
+  )
+
   return {
     playerNumber,
-    cipher: playerNumber === 1 ? stored.player1Cipher : stored.player2Cipher,
+    role,
+    cipher: isController ? stored.controllerCipher : undefined,
+    controllerCommand:
+      isController && !revealRound ? stored.controllerCommand : undefined,
+    sabotagerGuess:
+      isSabotager && !revealRound ? stored.sabotagerGuess : undefined,
   }
 }
 
@@ -123,7 +209,6 @@ export async function emitStateToRoom(io: Server, roomCode: string): Promise<voi
   // Dispatch private payloads individually — never broadcast private data
   const sockets = await io.in(roomCode).fetchSockets()
   for (const s of sockets) {
-    // PlayerNumber is stored on socket.data by the auth middleware
     const pn = (s.data as Record<string, unknown>).playerNumber as 1 | 2 | undefined
     if (pn === 1 || pn === 2) {
       s.emit('game:private_state', { private: buildPrivateState(stored, pn) })
@@ -174,99 +259,214 @@ async function transitionTo(
 // Timer scheduler
 // ---------------------------------------------------------------------------
 
-/**
- * Inspects `state.phase` and schedules the next automatic timed transition,
- * if one is defined for that phase. Uses stored timestamps so the correct
- * remaining delay is computed even after a server restart.
- */
 export function scheduleNextTimer(io: Server, roomCode: string, state: StoredGameState): void {
   clearRoomTimer(roomCode)
 
   switch (state.phase) {
-    case 'WAITING_FOR_PLAYERS': {
-      if (!state.bothPlayersConnectedAt) {
-        break
-      }
-
-      // → COIN_TOSSING after 1 s from when both players first connected
-      const delay = msRemaining(state.bothPlayersConnectedAt, 1000)
+    // ALL_PLAYERS_CONNECTED → COIN_TOSSING after 5 s
+    case 'ALL_PLAYERS_CONNECTED': {
+      const delay = msRemaining(state.phaseEnteredAt, 5000)
       pendingTimers.set(
         roomCode,
         setTimeout(() => {
           transitionTo(io, roomCode, 'COIN_TOSSING', () => ({
             coinTossWinner: (Math.random() < 0.5 ? 1 : 2),
           })).catch((error: unknown) => {
-            logger.error('Timer error: WAITING→COIN_TOSSING', { roomCode, err: error })
+            logger.error('Timer error: ALL_PLAYERS_CONNECTED->COIN_TOSSING', { roomCode, error })
           })
         }, delay),
       )
       break
     }
 
+    // COIN_TOSSING → COIN_TOSSED after 3 s
     case 'COIN_TOSSING': {
-      // → COIN_TOSSED after 3 s (frontend coin-flip animation window)
       const delay = msRemaining(state.phaseEnteredAt, 3000)
       pendingTimers.set(
         roomCode,
         setTimeout(() => {
           transitionTo(io, roomCode, 'COIN_TOSSED').catch((error: unknown) => {
-            logger.error('Timer error: COIN_TOSSING→COIN_TOSSED', { roomCode, err: error })
+            logger.error('Timer error: COIN_TOSSING->COIN_TOSSED', { roomCode, error })
           })
         }, delay),
       )
       break
     }
 
+    // COIN_TOSSED → PRE_ROUND after 10 s
     case 'COIN_TOSSED': {
-      // → PRE_ROUND after 10 s (let players see who goes first)
       const delay = msRemaining(state.phaseEnteredAt, 10_000)
       pendingTimers.set(
         roomCode,
         setTimeout(() => {
-          transitionTo(io, roomCode, 'PRE_ROUND', s => ({
-            roundNumber: s.roundNumber + 1,
-            player1Ready: false,
-            player2Ready: false,
-            player1Cipher: undefined,
-            player2Cipher: undefined,
-            roundWinner: undefined,
-          })).catch((error: unknown) => {
-            logger.error('Timer error: COIN_TOSSED→PRE_ROUND', { roomCode, err: error })
+          transitionTo(io, roomCode, 'PRE_ROUND', (s) => {
+            const ctrlr = s.coinTossWinner
+              ? deriveController(s.coinTossWinner, s.subRound)
+              : 1
+            return {
+              ...freshRoundFields(),
+              controller: ctrlr,
+              sabotager: (ctrlr === 1 ? 2 : 1),
+            }
+          }).catch((error: unknown) => {
+            logger.error('Timer error: COIN_TOSSED->PRE_ROUND', { roomCode, error })
           })
         }, delay),
       )
       break
     }
 
-    case 'POST_ROUND': {
-      // → GAME_OVER or PRE_ROUND after 5 s (results display window)
-      const delay = msRemaining(state.phaseEnteredAt, 5000)
+    // PRE_ROUND → CHALL_CONTROL after 60 s (empty cipher on timeout)
+    case 'PRE_ROUND': {
+      const delay = msRemaining(state.phaseEnteredAt, 60_000)
       pendingTimers.set(
         roomCode,
         setTimeout(() => {
-          if (state.gameWinner) {
-            transitionTo(io, roomCode, 'GAME_OVER').catch((error: unknown) => {
-              logger.error('Timer error: POST_ROUND→GAME_OVER', { roomCode, err: error })
-            })
-          }
-          else {
-            transitionTo(io, roomCode, 'PRE_ROUND', s => ({
-              roundNumber: s.roundNumber + 1,
-              player1Ready: false,
-              player2Ready: false,
-              player1Cipher: undefined,
-              player2Cipher: undefined,
-              roundWinner: undefined,
-            })).catch((error: unknown) => {
-              logger.error('Timer error: POST_ROUND→PRE_ROUND', { roomCode, err: error })
-            })
-          }
+          transitionTo(io, roomCode, 'CHALL_CONTROL', (s) => {
+            const cipher: Cipher = s.controllerCipher ?? { level: s.currentLevel, blocks: [] }
+            return {
+              controllerCipher: cipher,
+              cipherSelected: s.cipherSelected,
+              recommendedCommand: generateRandomCommand(),
+            }
+          }).catch((error: unknown) => {
+            logger.error('Timer error: PRE_ROUND->CHALL_CONTROL', { roomCode, error })
+          })
         }, delay),
       )
       break
     }
 
-    // PRE_ROUND, IN_ROUND, GAME_OVER have no automatic timed transitions
+    // CHALL_CONTROL → CHALL_SABOTAGE after 30 s (null command = controller forfeit)
+    case 'CHALL_CONTROL': {
+      const delay = msRemaining(state.phaseEnteredAt, 30_000)
+      pendingTimers.set(
+        roomCode,
+        setTimeout(() => {
+          transitionTo(io, roomCode, 'CHALL_SABOTAGE', (s) => {
+            const cmd = s.controllerCommand ?? null
+            let encrypted: string | undefined
+            if (cmd !== null && s.controllerCipher) {
+              const result = encrypt(cmd, s.controllerCipher)
+              encrypted = result.success ? result.result : cmd
+            }
+
+            return { controllerCommand: cmd, encryptedCommand: encrypted }
+          }).catch((error: unknown) => {
+            logger.error('Timer error: CHALL_CONTROL->CHALL_SABOTAGE', { roomCode, error })
+          })
+        }, delay),
+      )
+      break
+    }
+
+    // CHALL_SABOTAGE → ROUND_RESOLUTION after 30 s (null guess = sabotager forfeit)
+    case 'CHALL_SABOTAGE': {
+      const delay = msRemaining(state.phaseEnteredAt, 30_000)
+      pendingTimers.set(
+        roomCode,
+        setTimeout(() => {
+          transitionTo(io, roomCode, 'ROUND_RESOLUTION', s => ({
+            sabotagerGuess: s.sabotagerGuess ?? null,
+          })).catch((error: unknown) => {
+            logger.error('Timer error: CHALL_SABOTAGE->ROUND_RESOLUTION', { roomCode, error })
+          })
+        }, delay),
+      )
+      break
+    }
+
+    // ROUND_RESOLUTION → ROUND_WIN_CONTROL or ROUND_WIN_SABOTAGE after 5 s
+    case 'ROUND_RESOLUTION': {
+      const delay = msRemaining(state.phaseEnteredAt, 5000)
+      pendingTimers.set(
+        roomCode,
+        setTimeout(() => {
+          const { controllerCommand, sabotagerGuess, controller, sabotager } = state
+          let sabotageWins = false
+          if (controllerCommand === null) {
+            sabotageWins = true // Controller forfeited
+          }
+          else if (
+            sabotagerGuess !== null && sabotagerGuess !== undefined
+            && controllerCommand !== null && controllerCommand !== undefined
+          ) {
+            sabotageWins = compareCommands(controllerCommand, sabotagerGuess)
+          }
+
+          const roundWinner = sabotageWins ? sabotager : controller
+          const nextPhase: GamePhase = sabotageWins ? 'ROUND_WIN_SABOTAGE' : 'ROUND_WIN_CONTROL'
+          transitionTo(io, roomCode, nextPhase, () => ({ roundWinner })).catch((error: unknown) => {
+            logger.error(`Timer error: ROUND_RESOLUTION->${nextPhase}`, { roomCode, error })
+          })
+        }, delay),
+      )
+      break
+    }
+
+    // ROUND_WIN_CONTROL → POST_ROUND after 10 s (award point to controller)
+    case 'ROUND_WIN_CONTROL': {
+      const delay = msRemaining(state.phaseEnteredAt, 10_000)
+      pendingTimers.set(
+        roomCode,
+        setTimeout(() => {
+          transitionTo(io, roomCode, 'POST_ROUND', (s) => {
+            const scores = { ...s.scores }
+            if (s.controller === 1) {
+              scores.player1 += 1
+            }
+            else if (s.controller === 2) {
+              scores.player2 += 1
+            }
+
+            return { scores, player1Ready: false, player2Ready: false }
+          }).catch((error: unknown) => {
+            logger.error('Timer error: ROUND_WIN_CONTROL->POST_ROUND', { roomCode, error })
+          })
+        }, delay),
+      )
+      break
+    }
+
+    // ROUND_WIN_SABOTAGE → POST_ROUND after 10 s (award point to sabotager)
+    case 'ROUND_WIN_SABOTAGE': {
+      const delay = msRemaining(state.phaseEnteredAt, 10_000)
+      pendingTimers.set(
+        roomCode,
+        setTimeout(() => {
+          transitionTo(io, roomCode, 'POST_ROUND', (s) => {
+            const scores = { ...s.scores }
+            if (s.sabotager === 1) {
+              scores.player1 += 1
+            }
+            else if (s.sabotager === 2) {
+              scores.player2 += 1
+            }
+
+            return { scores, player1Ready: false, player2Ready: false }
+          }).catch((error: unknown) => {
+            logger.error('Timer error: ROUND_WIN_SABOTAGE->POST_ROUND', { roomCode, error })
+          })
+        }, delay),
+      )
+      break
+    }
+
+    // POST_ROUND → next PRE_ROUND or GAME_OVER after 60 s
+    case 'POST_ROUND': {
+      const delay = msRemaining(state.phaseEnteredAt, 60_000)
+      pendingTimers.set(
+        roomCode,
+        setTimeout(() => {
+          advanceFromPostRound(io, roomCode).catch((error: unknown) => {
+            logger.error('Timer error: POST_ROUND->next', { roomCode, error })
+          })
+        }, delay),
+      )
+      break
+    }
+
+    // WAITING_FOR_PLAYERS, GAME_OVER — no automatic timed transitions
     default: {
       break
     }
@@ -274,17 +474,78 @@ export function scheduleNextTimer(io: Server, roomCode: string, state: StoredGam
 }
 
 // ---------------------------------------------------------------------------
+// Post-round progression logic
+// ---------------------------------------------------------------------------
+
+async function advanceFromPostRound(io: Server, roomCode: string): Promise<void> {
+  const room = await getRoomByCode(roomCode)
+  if (!room?.room_state) {
+    return
+  }
+
+  const state = JSON.parse(room.room_state) as StoredGameState
+  if (state.phase !== 'POST_ROUND') {
+    return
+  }
+
+  if (state.subRound === 'A') {
+    // Same level — play sub-round B with roles swapped
+    await transitionTo(io, roomCode, 'PRE_ROUND', (s) => {
+      const ctrlr = s.coinTossWinner
+        ? deriveController(s.coinTossWinner, 'B')
+        : ((s.controller === 1 ? 2 : 1))
+      return {
+        ...freshRoundFields(),
+        subRound: 'B' as const,
+        roundNumber: s.roundNumber + 1,
+        controller: ctrlr,
+        sabotager: (ctrlr === 1 ? 2 : 1),
+      }
+    })
+  }
+  else if (state.currentLevel < 5) {
+    // Advance to next level — sub-round A
+    await transitionTo(io, roomCode, 'PRE_ROUND', (s) => {
+      const ctrlr = s.coinTossWinner
+        ? deriveController(s.coinTossWinner, 'A')
+        : (1 as 1 | 2)
+      return {
+        ...freshRoundFields(),
+        subRound: 'A' as const,
+        currentLevel: s.currentLevel + 1,
+        roundNumber: s.roundNumber + 1,
+        controller: ctrlr,
+        sabotager: (ctrlr === 1 ? 2 : 1),
+      }
+    })
+  }
+  else {
+    // All 5 levels done — game over
+    await transitionTo(io, roomCode, 'GAME_OVER', (s) => {
+      let gameWinner: 1 | 2 | 'draw'
+      if (s.scores.player1 > s.scores.player2) {
+        gameWinner = 1
+      }
+      else if (s.scores.player2 > s.scores.player1) {
+        gameWinner = 2
+      }
+      else {
+        gameWinner = 'draw'
+      }
+
+      return { gameWinner }
+    })
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Public handlers called from game-logic.ts
 // ---------------------------------------------------------------------------
 
-/**
- * Called once per `roomCode` on the first connection. Re-arms any timed
- * transition that should still be pending (e.g. after a server restart).
- */
 export async function ensureTimersScheduled(io: Server, roomCode: string): Promise<void> {
   if (pendingTimers.has(roomCode)) {
     return
-  } // Already running
+  }
 
   const room = await getRoomByCode(roomCode)
   if (!room?.room_state) {
@@ -296,9 +557,8 @@ export async function ensureTimersScheduled(io: Server, roomCode: string): Promi
 }
 
 /**
- * Records the moment both players' sockets are present in the room (called
- * the first time the second player connects while in WAITING_FOR_PLAYERS).
- * Starts the 5-second countdown to COIN_TOSSING.
+ * Immediately transitions to ALL_PLAYERS_CONNECTED when both players are
+ * present in WAITING_FOR_PLAYERS for the first time.
  */
 export async function recordBothPlayersConnected(
   io: Server,
@@ -314,56 +574,192 @@ export async function recordBothPlayersConnected(
     return
   }
 
-  const updated: StoredGameState = { ...state, bothPlayersConnectedAt: nowIso() }
-  await persistState(roomCode, updated)
-  logger.info('Both players now connected — countdown started', { roomCode })
-
-  await emitStateToRoom(io, roomCode)
-  scheduleNextTimer(io, roomCode, updated)
+  logger.info('Both players connected — transitioning to ALL_PLAYERS_CONNECTED', { roomCode })
+  await transitionTo(io, roomCode, 'ALL_PLAYERS_CONNECTED', () => ({
+    bothPlayersConnectedAt: nowIso(),
+  }))
 }
 
 /**
- * Handles `game:select_cipher` events from players during PRE_ROUND.
- * Once both players have selected, transitions to IN_ROUND.
+ * Handles `game:select_cipher` — controller only, during PRE_ROUND.
+ * Transitions to CHALL_CONTROL on success.
  */
 export async function handleCipherSelect(
   io: Server,
   roomCode: string,
   playerNumber: 1 | 2,
-  cipher: string,
-): Promise<void> {
+  cipherData: unknown,
+): Promise<{ success: boolean, error?: string }> {
   const room = await getRoomByCode(roomCode)
   if (!room?.room_state) {
-    return
+    return { success: false, error: 'Room not found' }
   }
 
   const state = JSON.parse(room.room_state) as StoredGameState
   if (state.phase !== 'PRE_ROUND') {
-    return
+    return { success: false, error: 'Not in PRE_ROUND phase' }
   }
 
-  // Idempotent: ignore duplicate submissions
-  if (playerNumber === 1 && state.player1Ready) {
-    return
+  if (state.controller !== playerNumber) {
+    return { success: false, error: 'Only the controller can select a cipher' }
   }
 
-  if (playerNumber === 2 && state.player2Ready) {
-    return
+  if (state.cipherSelected) {
+    return { success: true }
+  }
+
+  const parseResult = CipherSchema.safeParse(cipherData)
+  if (!parseResult.success) {
+    return {
+      success: false,
+      error: `Invalid cipher format: ${parseResult.error.errors[0]?.message}`,
+    }
+  }
+
+  const cipher = sanitizeCipher(parseResult.data)
+  const validation = isCipherValid(cipher)
+  if (!validation.valid) {
+    return { success: false, error: validation.errors.join('; ') }
+  }
+
+  logger.info('Cipher selected — transitioning to CHALL_CONTROL', { roomCode, playerNumber })
+  await transitionTo(io, roomCode, 'CHALL_CONTROL', () => ({
+    controllerCipher: cipher,
+    cipherSelected: true,
+    recommendedCommand: generateRandomCommand(),
+  }))
+
+  return { success: true }
+}
+
+/**
+ * Handles `game:submit_command` — controller only, during CHALL_CONTROL.
+ * Encrypts the command and transitions to CHALL_SABOTAGE.
+ */
+export async function handleSubmitCommand(
+  io: Server,
+  roomCode: string,
+  playerNumber: 1 | 2,
+  command: unknown,
+): Promise<{ success: boolean, error?: string }> {
+  if (typeof command !== 'string') {
+    return { success: false, error: 'command must be a string' }
+  }
+
+  const room = await getRoomByCode(roomCode)
+  if (!room?.room_state) {
+    return { success: false, error: 'Room not found' }
+  }
+
+  const state = JSON.parse(room.room_state) as StoredGameState
+  if (state.phase !== 'CHALL_CONTROL') {
+    return { success: false, error: 'Not in CHALL_CONTROL phase' }
+  }
+
+  if (state.controller !== playerNumber) {
+    return { success: false, error: 'Only the controller can submit a command' }
+  }
+
+  if (state.controllerCommand !== undefined) {
+    return { success: true }
+  }
+
+  if (!isValidCommandFormat(command)) {
+    return { success: false, error: 'Invalid command format. Expected: "Component type attribute value"' }
+  }
+
+  const cipher: Cipher = state.controllerCipher ?? { level: state.currentLevel, blocks: [] }
+  const encResult = encrypt(command, cipher)
+  if (!encResult.success) {
+    return { success: false, error: `Encryption failed: ${encResult.error}` }
+  }
+
+  logger.info('Controller submitted command — transitioning to CHALL_SABOTAGE', { roomCode, playerNumber })
+  await transitionTo(io, roomCode, 'CHALL_SABOTAGE', () => ({
+    controllerCommand: command,
+    encryptedCommand: encResult.result,
+  }))
+
+  return { success: true }
+}
+
+/**
+ * Handles `game:submit_guess` — sabotager only, during CHALL_SABOTAGE.
+ * Transitions to ROUND_RESOLUTION.
+ */
+export async function handleSubmitGuess(
+  io: Server,
+  roomCode: string,
+  playerNumber: 1 | 2,
+  guess: unknown,
+): Promise<{ success: boolean, error?: string }> {
+  if (typeof guess !== 'string') {
+    return { success: false, error: 'guess must be a string' }
+  }
+
+  const room = await getRoomByCode(roomCode)
+  if (!room?.room_state) {
+    return { success: false, error: 'Room not found' }
+  }
+
+  const state = JSON.parse(room.room_state) as StoredGameState
+  if (state.phase !== 'CHALL_SABOTAGE') {
+    return { success: false, error: 'Not in CHALL_SABOTAGE phase' }
+  }
+
+  if (state.sabotager !== playerNumber) {
+    return { success: false, error: 'Only the sabotager can submit a guess' }
+  }
+
+  if (state.sabotagerGuess !== undefined) {
+    return { success: true }
+  }
+
+  if (!isValidCommandFormat(guess)) {
+    return { success: false, error: 'Invalid guess format. Expected: "Component type attribute value"' }
+  }
+
+  logger.info('Sabotager submitted guess — transitioning to ROUND_RESOLUTION', { roomCode, playerNumber })
+  await transitionTo(io, roomCode, 'ROUND_RESOLUTION', () => ({
+    sabotagerGuess: guess,
+  }))
+
+  return { success: true }
+}
+
+/**
+ * Handles `game:player_ready` during POST_ROUND.
+ * Immediately advances if both players are ready.
+ */
+export async function handlePlayerReady(
+  io: Server,
+  roomCode: string,
+  playerNumber: 1 | 2,
+): Promise<{ success: boolean, error?: string }> {
+  const room = await getRoomByCode(roomCode)
+  if (!room?.room_state) {
+    return { success: false, error: 'Room not found' }
+  }
+
+  const state = JSON.parse(room.room_state) as StoredGameState
+  if (state.phase !== 'POST_ROUND') {
+    return { success: false, error: 'Not in POST_ROUND phase' }
+  }
+
+  const alreadyReady = playerNumber === 1 ? state.player1Ready : state.player2Ready
+  if (alreadyReady) {
+    return { success: true }
   }
 
   const updated: StoredGameState = {
     ...state,
-    ...(playerNumber === 1
-      ? { player1Cipher: cipher, player1Ready: true }
-      : { player2Cipher: cipher, player2Ready: true }),
+    ...(playerNumber === 1 ? { player1Ready: true } : { player2Ready: true }),
   }
 
   await persistState(roomCode, updated)
-  logger.info('Cipher selected', { roomCode, playerNumber })
+  logger.info('Player ready', { roomCode, playerNumber })
 
-  await (
-    updated.player1Ready && updated.player2Ready
-      ? transitionTo(io, roomCode, 'IN_ROUND')
-      : emitStateToRoom(io, roomCode)
-  )
+  await (updated.player1Ready && updated.player2Ready ? advanceFromPostRound(io, roomCode) : emitStateToRoom(io, roomCode))
+
+  return { success: true }
 }

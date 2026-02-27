@@ -13,12 +13,16 @@ export interface GameState extends PublicState {
   playerNumber?: PrivateState['playerNumber']
   cipher?: PrivateState['cipher']
 
+  // Latest server error message
+  errorMessage?: string
+
   // Metadata
   isHydrated: boolean
 
   // Actions
   updatePublicState: (publicState: PublicState) => void
   updatePrivateState: (privateState: PrivateState) => void
+  setErrorMessage: (message?: string) => void
   reset: () => void
 }
 
@@ -33,6 +37,7 @@ const initialState = {
   player2Ready: false,
   playerNumber: undefined as undefined | 1 | 2,
   cipher: undefined as undefined | string,
+  errorMessage: undefined as undefined | string,
   isHydrated: false,
 }
 
@@ -41,6 +46,7 @@ export const useGameStore = create<GameState>()(devtools(immer(set => ({
 
   updatePublicState(publicState: PublicState) {
     set((state) => {
+      const phaseChanged = state.phase !== publicState.phase
       state.phase = publicState.phase
       state.phaseEnteredAt = publicState.phaseEnteredAt
       state.roundNumber = publicState.roundNumber
@@ -52,6 +58,14 @@ export const useGameStore = create<GameState>()(devtools(immer(set => ({
       state.player2Ready = publicState.player2Ready
       state.roundWinner = publicState.roundWinner
       state.gameWinner = publicState.gameWinner
+      if (publicState.level !== undefined) {
+        state.level = publicState.level
+      }
+
+      if (phaseChanged) {
+        state.errorMessage = undefined
+      }
+
       state.isHydrated = true
       console.log('[GameStore] Updated public state, phase:', publicState.phase)
     })
@@ -65,6 +79,12 @@ export const useGameStore = create<GameState>()(devtools(immer(set => ({
         '[GameStore] Updated private state, player:',
         privateState.playerNumber,
       )
+    })
+  },
+
+  setErrorMessage(message) {
+    set((state) => {
+      state.errorMessage = message
     })
   },
 

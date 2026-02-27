@@ -1,6 +1,10 @@
 import { create } from 'zustand'
 import { getSocket, destroySocket } from '../lib/socket'
-import { safeParseSocketMessage, GameStateEventSchema } from '../lib/socket-message-validator'
+import {
+  safeParseSocketMessage,
+  GameStateEventSchema,
+  GameErrorEventSchema,
+} from '../lib/socket-message-validator'
 import { useRoomStore } from './room-store'
 import { useGameStore } from './game-store'
 
@@ -10,6 +14,7 @@ interface SocketState {
   status: ConnectionStatus
   error?: string
   requiresJoin: boolean
+  lastAuthKey?: string
   connect: () => void
   disconnect: () => void
 }
@@ -30,9 +35,10 @@ function isAuthErrorMessage(message: string | undefined): boolean {
   return authErrorMessages.has(message)
 }
 
-export const useSocketStore = create<SocketState>(set => ({
+export const useSocketStore = create<SocketState>((set, get) => ({
   status: 'disconnected',
   requiresJoin: false,
+  lastAuthKey: undefined,
 
   connect() {
     console.log('[SocketStore] connect() called')
@@ -48,6 +54,13 @@ export const useSocketStore = create<SocketState>(set => ({
       return
     }
 
+    const nextAuthKey = `${roomCode}:${playerSecret}`
+    const currentAuthKey = get().lastAuthKey
+    if (currentAuthKey && currentAuthKey !== nextAuthKey) {
+      console.log('[SocketStore] Auth changed, resetting socket')
+      destroySocket()
+    }
+
     const socket = getSocket()
     // eslint-disable-next-line camelcase
     socket.auth = { room_code: roomCode, secret: playerSecret }
@@ -55,6 +68,12 @@ export const useSocketStore = create<SocketState>(set => ({
     // Prevent double-binding on React StrictMode/HMR
     if (socket.hasListeners('connect')) {
       console.log('[SocketStore] Socket already has listeners, skipping rebind')
+      set({
+        status: socket.connected ? 'connected' : 'connecting',
+        error: undefined,
+        requiresJoin: false,
+        lastAuthKey: nextAuthKey,
+      })
       if (!socket.connected) {
         console.log('[SocketStore] Socket not connected, calling connect()')
         socket.connect()
@@ -63,7 +82,9 @@ export const useSocketStore = create<SocketState>(set => ({
       return
     }
 
-    set({ status: 'connecting' })
+    set({
+      status: 'connecting', error: undefined, requiresJoin: false, lastAuthKey: nextAuthKey,
+    })
     console.log('[SocketStore] Status set to connecting')
 
     socket.on('connect', () => {
@@ -123,6 +144,19 @@ export const useSocketStore = create<SocketState>(set => ({
       }
     })
 
+    socket.on('game:error', (rawData: unknown) => {
+      const result = safeParseSocketMessage(GameErrorEventSchema, rawData)
+      if (!result.success) {
+        console.error(
+          '[SocketStore] Validation failed for game:error event:',
+          result.error.issues,
+        )
+        return
+      }
+
+      useGameStore.getState().setErrorMessage(result.data.message)
+    })
+
     console.log('[SocketStore] Calling socket.connect()')
     socket.connect()
   },
@@ -131,7 +165,7 @@ export const useSocketStore = create<SocketState>(set => ({
     console.log('[SocketStore] disconnect() called')
     destroySocket()
     useGameStore.getState().reset()
-    set({ status: 'disconnected', requiresJoin: false })
+    set({ status: 'disconnected', requiresJoin: false, lastAuthKey: undefined })
   },
 }))
 

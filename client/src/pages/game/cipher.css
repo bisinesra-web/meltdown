@@ -1,0 +1,498 @@
+/* Scoped reset */
+.cipher-page,
+.cipher-page *,
+.cipher-page *::before,
+.cipher-page *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.cipher-page {
+  --cp-green: #C2D685;
+  --cp-green-dim: rgba(194, 214, 133, 0.4);
+  --cp-green-strong: #dbe6b0;
+  --cp-red: #723435;
+  --cp-red-dim: rgba(114, 52, 53, 0.5);
+  --cp-black: #0a0a0a;
+  --cp-panel: rgba(12, 16, 12, 0.9);
+  --cp-panel-strong: rgba(16, 22, 16, 0.95);
+  --cp-border: rgba(194, 214, 133, 0.2);
+  --cp-border-strong: rgba(194, 214, 133, 0.45);
+  --cp-shadow: rgba(0, 0, 0, 0.45);
+  --cp-font: "JetBrains Mono Variable", "Courier New", monospace;
+
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  font-family: var(--cp-font);
+  background: radial-gradient(circle at 20% 20%, rgba(38, 44, 36, 0.4), transparent 55%),
+    radial-gradient(circle at 85% 20%, rgba(114, 52, 53, 0.18), transparent 45%),
+    radial-gradient(circle at 30% 80%, rgba(194, 214, 133, 0.12), transparent 50%),
+    #0b0d0b;
+  color: var(--cp-green);
+  z-index: 1;
+}
+
+.cipher-page__bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  opacity: 0.7;
+}
+
+.cipher-page__vignette {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 0%,
+    transparent 35%,
+    rgba(0, 0, 0, 0.5) 60%,
+    rgba(0, 0, 0, 0.85) 100%
+  );
+}
+
+.cipher-page__scanlines {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0px,
+    transparent 2px,
+    rgba(0, 0, 0, 0.1) 2px,
+    rgba(0, 0, 0, 0.1) 4px
+  );
+  opacity: 0.45;
+}
+
+.cipher-page__header {
+  position: relative;
+  z-index: 4;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2.2rem 3rem 1.5rem;
+}
+
+.cipher-page__eyebrow {
+  font-size: 0.85rem;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: var(--cp-green-dim);
+}
+
+.cipher-page__title {
+  font-size: clamp(1.6rem, 3.8vw, 3rem);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--cp-green-strong);
+  text-shadow: 0 0 18px rgba(194, 214, 133, 0.35);
+}
+
+.cipher-page__timer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
+  padding: 0.6rem 1.2rem;
+  border: 1px solid var(--cp-border-strong);
+  background: rgba(10, 12, 10, 0.7);
+  box-shadow: 0 0 18px rgba(194, 214, 133, 0.12);
+}
+
+.cipher-page__timer-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: var(--cp-green-dim);
+}
+
+.cipher-page__timer-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+}
+
+.cipher-page__main {
+  position: relative;
+  z-index: 4;
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(360px, 1.4fr) minmax(260px, 0.9fr);
+  gap: 1.6rem;
+  padding: 0 3rem 2.5rem;
+  height: calc(100vh - 150px);
+}
+
+.cipher-page__panel {
+  background: var(--cp-panel);
+  border: 1px solid var(--cp-border);
+  box-shadow: 0 12px 24px var(--cp-shadow);
+  padding: 1.4rem 1.4rem 1.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  position: relative;
+}
+
+.cipher-page__panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(194, 214, 133, 0.08);
+  pointer-events: none;
+}
+
+.cipher-page__panel-header h2 {
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.25em;
+  color: var(--cp-green-strong);
+}
+
+.cipher-page__panel-header p {
+  font-size: 0.75rem;
+  color: var(--cp-green-dim);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-top: 0.4rem;
+}
+
+.cipher-page__block-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  overflow-y: auto;
+  padding-right: 0.4rem;
+}
+
+.cipher-page__builder-zone {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.cipher-page__dropzone {
+  flex: 1;
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px dashed rgba(194, 214, 133, 0.3);
+  background: var(--cp-panel-strong);
+  overflow-y: auto;
+}
+
+.cipher-page__dropzone--active {
+  border-color: var(--cp-green-strong);
+  box-shadow: 0 0 18px rgba(194, 214, 133, 0.25);
+}
+
+.cipher-page__trash {
+  border: 1px solid rgba(114, 52, 53, 0.6);
+  background: rgba(30, 10, 10, 0.6);
+  text-align: center;
+  padding: 0.8rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  color: rgba(214, 164, 165, 0.9);
+}
+
+.cipher-page__trash.cipher-page__dropzone--active {
+  border-color: rgba(214, 164, 165, 0.9);
+  box-shadow: 0 0 18px rgba(114, 52, 53, 0.45);
+}
+
+.cipher-page__waiting {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(4, 6, 4, 0.85);
+  border: 1px solid rgba(194, 214, 133, 0.2);
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  color: var(--cp-green-strong);
+}
+
+.cipher-page__empty {
+  padding: 2rem 1rem;
+  text-align: center;
+  color: var(--cp-green-dim);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+}
+
+.cipher-page__status-grid {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.cipher-page__stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--cp-border);
+  background: rgba(10, 12, 10, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.7rem;
+}
+
+.cipher-page__stat strong {
+  font-size: 0.85rem;
+}
+
+.cipher-page__ok {
+  color: var(--cp-green-strong);
+}
+
+.cipher-page__bad {
+  color: #d28a8c;
+}
+
+.cipher-page__errors {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
+}
+
+.cipher-page__error-line {
+  color: #d28a8c;
+  text-transform: uppercase;
+}
+
+.cipher-page__confirm {
+  margin-top: auto;
+  padding: 0.9rem 1.2rem;
+  border: 1px solid var(--cp-border-strong);
+  background: transparent;
+  color: var(--cp-green-strong);
+  font-family: var(--cp-font);
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cipher-page__confirm:hover:not(:disabled) {
+  background: var(--cp-green-strong);
+  color: var(--cp-black);
+  box-shadow: 0 0 18px rgba(194, 214, 133, 0.4);
+}
+
+.cipher-page__confirm:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.cipher-page__note {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--cp-green-dim);
+  margin-top: 0.8rem;
+}
+
+/* Block tile */
+.cipher-block-tile {
+  border: 1px solid var(--cp-border);
+  background: rgba(10, 12, 10, 0.7);
+  padding: 0.8rem 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  cursor: grab;
+  transition: border 0.2s ease, transform 0.2s ease;
+}
+
+.cipher-block-tile--dragging {
+  opacity: 0.6;
+  cursor: grabbing;
+}
+
+.cipher-block-tile--disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.cipher-block-tile__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cipher-block-tile__name {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+}
+
+.cipher-block-tile__count {
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  color: var(--cp-green-dim);
+}
+
+.cipher-block-tile__desc {
+  font-size: 0.72rem;
+  color: rgba(194, 214, 133, 0.7);
+  line-height: 1.4;
+}
+
+.cipher-block-tile__meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(194, 214, 133, 0.5);
+}
+
+.cipher-block-tile__tag {
+  color: var(--cp-green-strong);
+}
+
+/* Block row */
+.cipher-block-row {
+  border: 1px solid rgba(194, 214, 133, 0.3);
+  padding: 0.8rem;
+  background: rgba(9, 12, 9, 0.75);
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.cipher-block-row--dragging {
+  opacity: 0.6;
+}
+
+.cipher-block-row__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.cipher-block-row__title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-size: 0.8rem;
+}
+
+.cipher-block-row__index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--cp-border);
+  font-size: 0.7rem;
+}
+
+.cipher-block-row__actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.cipher-block-row__btn,
+.cipher-block-row__drag {
+  background: transparent;
+  border: 1px solid var(--cp-border);
+  color: var(--cp-green-dim);
+  font-family: var(--cp-font);
+  font-size: 0.6rem;
+  padding: 0.3rem 0.5rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.cipher-block-row__btn--danger {
+  border-color: rgba(114, 52, 53, 0.7);
+  color: rgba(214, 164, 165, 0.9);
+}
+
+.cipher-block-row__btn:disabled,
+.cipher-block-row__drag:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.cipher-block-row__inputs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.cipher-block-row__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: rgba(194, 214, 133, 0.6);
+}
+
+.cipher-block-row__field input {
+  background: rgba(6, 8, 6, 0.7);
+  border: 1px solid var(--cp-border);
+  color: var(--cp-green-strong);
+  padding: 0.5rem;
+  font-family: var(--cp-font);
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+}
+
+.cipher-block-row__field input:disabled {
+  opacity: 0.5;
+}
+
+@media (max-width: 1200px) {
+  .cipher-page__main {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  .cipher-page {
+    overflow-y: auto;
+  }
+}
+
+@media (max-width: 720px) {
+  .cipher-page__header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .cipher-page__main {
+    padding: 0 1.5rem 2.5rem;
+  }
+
+  .cipher-block-row__inputs {
+    grid-template-columns: 1fr;
+  }
+}
