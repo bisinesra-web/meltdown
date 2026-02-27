@@ -4,6 +4,13 @@ meltdown.iiitk.in {
         flush_interval -1
     }
 
+    # GET /game exactly → frontend SPA
+    @gameExact {
+        method GET
+        path /game
+    }
+    reverse_proxy @gameExact frontend:80
+
     # REST API
     reverse_proxy /rooms* backend:3000
     reverse_proxy /game*  backend:3000
