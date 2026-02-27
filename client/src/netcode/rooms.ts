@@ -23,7 +23,7 @@ export type Room = z.infer<typeof RoomSchema>
 
 // --- API Functions ---
 
-const API_BASE = 'http://localhost:3000' // Assuming this based on server/index.ts
+const API_BASE = import.meta.env.VITE_API_BASE as string
 
 async function fetchWithAuth(url: string, method = 'GET', body?: unknown): Promise<unknown> {
   const { token } = useAdminStore.getState()
