@@ -23,7 +23,7 @@ interface DragDropEvent {
   }
 }
 
-const ROUND_DURATION_MS = 30_000
+const ROUND_DURATION_MS = 60_000
 
 function createBlockId(): string {
   return `${String(Date.now())}-${Math.random().toString(16).slice(2)}`
