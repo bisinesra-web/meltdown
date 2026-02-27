@@ -78,21 +78,6 @@ export default function TurnEndPage() {
             </p>
           )}
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-            <p className='game-phase__subtitle' style={{ textAlign: 'center' }}>Scores</p>
-            <div className='game-phase__scores'>
-              <div className='game-phase__score-player'>
-                <span className='game-phase__score-name'>{player1Name}</span>
-                <span className='game-phase__score-value'>{scores.player1}</span>
-              </div>
-              <span className='game-phase__score-vs'>VS</span>
-              <div className='game-phase__score-player'>
-                <span className='game-phase__score-name'>{player2Name}</span>
-                <span className='game-phase__score-value'>{scores.player2}</span>
-              </div>
-            </div>
-          </div>
-
           <p className='game-phase__subtitle' style={{ textAlign: 'center' }}>
             Ready for next action
             <span className='game-phase__waiting-dot' />
