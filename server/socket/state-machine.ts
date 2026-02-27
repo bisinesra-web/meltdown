@@ -649,7 +649,8 @@ export function scheduleNextTimer(io: Server, roomCode: string, state: StoredGam
 
           if (shouldEndTurn && !turnWinner) {
             // Controller wins if we've used all subrounds and HP > 0
-            turnWinner = controller
+            // Sabotager wins if HP dropped to 0
+            turnWinner = hpAfterDamage > 0 ? controller : sabotager
           }
 
           transitionTo(io, roomCode, nextPhase, (s) => {
