@@ -7,8 +7,8 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  BACKEND_IMAGE: ghcr.io/notaproton/meltdown-backend
-  FRONTEND_IMAGE: ghcr.io/notaproton/meltdown-frontend
+  BACKEND_IMAGE: ghcr.io/bisinesra-web/meltdown-backend
+  FRONTEND_IMAGE: ghcr.io/bisinesra-web/meltdown-frontend
 
 jobs:
   build-and-push:
