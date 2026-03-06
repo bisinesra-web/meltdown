@@ -1,4 +1,4 @@
-meltdown.iiitk.in {
+localhost {
     # Socket.IO — WebSocket + long-polling with immediate flush
     reverse_proxy /socket.io/* backend:3000 {
         flush_interval -1
