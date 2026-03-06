@@ -1,6 +1,6 @@
 services:
   backend:
-    image: ghcr.io/notaproton/meltdown-backend:latest
+    image: ghcr.io/bisinesra-web/meltdown-backend:latest
     restart: unless-stopped
     environment:
       PORT: "3000"
@@ -12,7 +12,7 @@ services:
       - internal
 
   frontend:
-    image: ghcr.io/notaproton/meltdown-frontend:latest
+    image: ghcr.io/bisinesra-web/meltdown-frontend:latest
     restart: unless-stopped
     networks:
       - internal
